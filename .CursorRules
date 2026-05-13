@@ -1,5 +1,5 @@
 # Role: n8n Automation Architect
-# Model: Claude 3.5 Sonnet / Opus 4.5
+# Model: Claude Sonet / Opus  Any other model with higher reasoning and intelligence capability 
 # Goal: Build robust, agency-grade n8n workflows by synthesizing proven patterns with strict engineering standards.
 
 
@@ -61,28 +61,55 @@ If writing Python, use
 # MEMORY (The Vault)
 # You must ALWAYS search the Reference Library for "How we did it before":
 
-- **General Search:** Scan `@Reference_Library/Organized_Workflows_Multi` for broad context.
+**Structure:** `Reference_Library/n8n_workflows_scraped/<Category>`
+
+- **General Search:** Scan `@Reference_Library/n8n_workflows_scraped` for broad context.
 
 - **Specific Scopes (Targeted Search):**
-  - **AI Agents:** Search `@Reference_Library/Organized_Workflows_Multi/AI Agents` (Keywords: OpenAI, LangChain, Anthropic, LLM, Memory).
-  - **CRM & Sales:** Search `@Reference_Library/Organized_Workflows_Multi/CRM & Sales` (Keywords: HubSpot, Pipedrive, Salesforce, Leads, Pipelines).
-  - **Database & Sheets:** Search `@Reference_Library/Organized_Workflows_Multi/Database & Sheets` (Keywords: Postgres, MySQL, Supabase, Google Sheets, Airtable).
-  - **DevOps & Cloud:** Search `@Reference_Library/Organized_Workflows_Multi/DevOps & Cloud` (Keywords: AWS, Docker, Git, CI/CD, Serverless).
-  - **Discord Bots:** Search `@Reference_Library/Organized_Workflows_Multi/Discord Bots` (Keywords: Discord, Slash Commands, Roles, Messages).
-  - **Email Automation:** Search `@Reference_Library/Organized_Workflows_Multi/Email Automation` (Keywords: Gmail, Outlook, SMTP, SES, Cold Email).
-  - **Finance:** Search `@Reference_Library/Organized_Workflows_Multi/Finance` (Keywords: Stripe, PayPal, Invoices, Xero, QuickBooks).
-  - **HR:** Search `@Reference_Library/Organized_Workflows_Multi/HR` (Keywords: Recruitment, Onboarding, Payroll, Employee Data).
-  - **Marketing:** Search `@Reference_Library/Organized_Workflows_Multi/Marketing` (Keywords: Campaigns, Lead Gen, Ads, Analytics, Funnels).
-  - **Project Management:** Search `@Reference_Library/Organized_Workflows_Multi/Project Management` (Keywords: Notion, Trello, Asana, Jira, Tasks).
-  - **Scraping & Data:** Search `@Reference_Library/Organized_Workflows_Multi/Scraping & Data` (Keywords: Puppeteer, Cheerio, HTML Extract, Crawler, Parsing).
-  - **SEO:** Search `@Reference_Library/Organized_Workflows_Multi/SEO` (Keywords: SEMrush, Ahrefs, SERP, Keywords, Audits).
-  - **Shopify & Ecom:** Search `@Reference_Library/Organized_Workflows_Multi/Shopify & Ecom` (Keywords: WooCommerce, Orders, Inventory, Products, Carts).
-  - **Slack Automation:** Search `@Reference_Library/Organized_Workflows_Multi/Slack Automation` (Keywords: Slack, Notifications, Alerts, Channels).
-  - **Social Media:** Search `@Reference_Library/Organized_Workflows_Multi/Social Media` (Keywords: Twitter/X, LinkedIn, Instagram, Posting, Scheduling).
-  - **Telegram Bots:** Search `@Reference_Library/Organized_Workflows_Multi/Telegram Bots` (Keywords: BotFather, Chat ID, Groups, Telegram API).
-  - **Video & Audio:** Search `@Reference_Library/Organized_Workflows_Multi/Video & Audio` (Keywords: YouTube, Whisper, Transcribe, Ffmpeg, Podcasts).
-  - **WordPress:** Search `@Reference_Library/Organized_Workflows_Multi/WordPress` (Keywords: WP API, Posts, Pages, Plugins, Hooks).
-  - **Unsorted:** Search `@Reference_Library/Organized_Workflows_Multi/_Unsorted` (Keywords: Miscellaneous, General, One-offs).
+  - **Database Operations:** Search `@Reference_Library/n8n_workflows_scraped/Database Operations` (Keywords: Postgres, MySQL, Supabase, Queries, CRUD).
+  - **Development:** Search `@Reference_Library/n8n_workflows_scraped/Development` (Keywords: APIs, Code, Git, Webhooks, HTTP).
+  - **Email Automation:** Search `@Reference_Library/n8n_workflows_scraped/Email Automation` (Keywords: Gmail, Outlook, SMTP, Triggers, Notifications).
+  - **Email Marketing:** Search `@Reference_Library/n8n_workflows_scraped/Email Marketing` (Keywords: Campaigns, Broadcasts, Sequences, Cold Email).
+  - **Email Productivity:** Search `@Reference_Library/n8n_workflows_scraped/Email Productivity` (Keywords: Templates, Signatures, Rules, Filters).
+  - **Facebook:** Search `@Reference_Library/n8n_workflows_scraped/Facebook` (Keywords: Posts, Ads, Pages, Groups).
+  - **File Storage:** Search `@Reference_Library/n8n_workflows_scraped/File Storage` (Keywords: S3, Google Drive, Dropbox, Upload, Download).
+  - **Flow Control:** Search `@Reference_Library/n8n_workflows_scraped/Flow Control` (Keywords: IF, Switch, Merge, Split, Branching).
+  - **Instagram:** Search `@Reference_Library/n8n_workflows_scraped/Instagram` (Keywords: Posts, Stories, Media, Social).
+  - **Instant Messaging:** Search `@Reference_Library/n8n_workflows_scraped/Instant Messaging` (Keywords: Telegram, WhatsApp, Messages, Chat).
+  - **Issue & Bug Tracking:** Search `@Reference_Library/n8n_workflows_scraped/Issue & Bug Tracking` (Keywords: Jira, Linear, Bugs, Tickets, Tasks).
+  - **Lead Management:** Search `@Reference_Library/n8n_workflows_scraped/Lead Management` (Keywords: Leads, Capture, Nurture, Conversion).
+  - **LinkedIn:** Search `@Reference_Library/n8n_workflows_scraped/LinkedIn` (Keywords: Posts, Profile, Connections, Networking).
+  - **Mastodon:** Search `@Reference_Library/n8n_workflows_scraped/Mastodon` (Keywords: Toots, Federation, Social).
+  - **Messaging Platforms:** Search `@Reference_Library/n8n_workflows_scraped/Messaging Platforms` (Keywords: Slack, Teams, Channels, Notifications).
+  - **Monitoring & Logging:** Search `@Reference_Library/n8n_workflows_scraped/Monitoring & Logging` (Keywords: Sentry, Logs, Alerts, Analytics).
+  - **Notes & Note-Taking:** Search `@Reference_Library/n8n_workflows_scraped/Notes & Note-Taking` (Keywords: Notes, Documentation, Wiki).
+  - **Notion:** Search `@Reference_Library/n8n_workflows_scraped/Notion` (Keywords: Database, Pages, Integration, Wiki).
+  - **Notion & Docs:** Search `@Reference_Library/n8n_workflows_scraped/Notion & Docs` (Keywords: Documentation, Collaboration, Knowledge Base).
+  - **Pinterest:** Search `@Reference_Library/n8n_workflows_scraped/Pinterest` (Keywords: Pins, Boards, Visual Discovery).
+  - **Project Management:** Search `@Reference_Library/n8n_workflows_scraped/Project Management` (Keywords: Asana, Trello, Projects, Boards).
+  - **RAG:** Search `@Reference_Library/n8n_workflows_scraped/RAG` (Keywords: Retrieval, Vector, AI, Embeddings, Knowledge Base).
+  - **Reddit:** Search `@Reference_Library/n8n_workflows_scraped/Reddit` (Keywords: Posts, Subreddits, Moderation, Scraping).
+  - **Sales & Pipeline:** Search `@Reference_Library/n8n_workflows_scraped/Sales & Pipeline` (Keywords: Deals, CRM, Pipeline, Revenue).
+  - **Scheduling & Triggers:** Search `@Reference_Library/n8n_workflows_scraped/Scheduling & Triggers` (Keywords: Cron, Schedule, Time, Interval).
+  - **SEO:** Search `@Reference_Library/n8n_workflows_scraped/SEO` (Keywords: SERP, Keywords, Rankings, Audits).
+  - **SMS & MMS:** Search `@Reference_Library/n8n_workflows_scraped/SMS & MMS` (Keywords: Twilio, Messages, Notifications).
+  - **Social Media:** Search `@Reference_Library/n8n_workflows_scraped/Social Media` (Keywords: Posts, Scheduling, Cross-posting).
+  - **Social Media Posting:** Search `@Reference_Library/n8n_workflows_scraped/Social Media Posting` (Keywords: Auto-post, Schedule, Cross-post).
+  - **Spreadsheets:** Search `@Reference_Library/n8n_workflows_scraped/Spreadsheets` (Keywords: Google Sheets, Excel, Data, Tables).
+  - **Task Management:** Search `@Reference_Library/n8n_workflows_scraped/Task Management` (Keywords: Tasks, To-do, Assignment, Due Dates).
+  - **Team Chat:** Search `@Reference_Library/n8n_workflows_scraped/Team Chat` (Keywords: Slack, Teams, Collaboration, Chat).
+  - **Team Collaboration:** Search `@Reference_Library/n8n_workflows_scraped/Team Collaboration` (Keywords: Docs, Sharing, Communication).
+  - **Threads:** Search `@Reference_Library/n8n_workflows_scraped/Threads` (Keywords: Posts, Conversations, Social).
+  - **TikTok:** Search `@Reference_Library/n8n_workflows_scraped/TikTok` (Keywords: Videos, Content, Social).
+  - **Transactional Email:** Search `@Reference_Library/n8n_workflows_scraped/Transactional Email` (Keywords: SendGrid, Mandrill, Receipts, Confirmation).
+  - **Twitter:** Search `@Reference_Library/n8n_workflows_scraped/Twitter` (Keywords: Tweets, X, Social, Posts).
+  - **Utilities:** Search `@Reference_Library/n8n_workflows_scraped/Utilities` (Keywords: Helpers, Tools, Miscellaneous).
+  - **Version Control:** Search `@Reference_Library/n8n_workflows_scraped/Version Control` (Keywords: GitHub, GitLab, Branches, CI/CD).
+  - **Web & API:** Search `@Reference_Library/n8n_workflows_scraped/Web & API` (Keywords: HTTP, REST, Endpoints, Integrations).
+  - **Webhook Automations:** Search `@Reference_Library/n8n_workflows_scraped/Webhook Automations` (Keywords: Triggers, POST, GET, Data).
+  - **wordpress:** Search `@Reference_Library/n8n_workflows_scraped/wordpress` (Keywords: Posts, Pages, WP API, CMS).
+  - **Workflow Control:** Search `@Reference_Library/n8n_workflows_scraped/Workflow Control` (Keywords: Error Handling, Retry, Loops).
+  - **YouTube:** Search `@Reference_Library/n8n_workflows_scraped/YouTube` (Keywords: Videos, Thumbnails, Channel, Uploads).
 
 
 
