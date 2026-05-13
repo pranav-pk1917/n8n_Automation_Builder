@@ -1,7 +1,7 @@
 # MCP Server Registry
 
 ## Overview
-This document tracks all MCP (Model Context Protocol) servers configured for the Titan Automation Builder project.
+This document tracks all MCP (Model Context Protocol) servers configured for the n8n_automation_builder project.
 
 ---
 

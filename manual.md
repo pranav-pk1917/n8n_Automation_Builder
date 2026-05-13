@@ -1,12 +1,12 @@
 This is your enhanced, hierarchical **Standard Operating Procedure (SOP)**. I have used Markdown formatting to visually separate sections and emphasize critical actions.
 
-Save this file as `TITAN_MANUAL.md` in the root of your `n8n_Automation_Builder` folder.
+Save this file as `MANUAL.md` in the root of your `n8n_automation_builder` folder.
 
 ---
 
-# 📘 Titan Automation Builder: Operating Manual
+# n8n_automation_builder: Operating Manual
 
-**Version:** 2.0 (Titan V2)
+**Version:** 2.0 (Build V2)
 **Owner:** Webley Media / Pranav
 **System:** Cursor AI + n8n + Local Knowledge Base
 
@@ -14,7 +14,7 @@ Save this file as `TITAN_MANUAL.md` in the root of your `n8n_Automation_Builder`
 
 ## 1. System Overview (What is this?)
 
-The **Titan Builder** is not just an AI chat. It is a "Cybernetic Factory" that builds n8n automation workflows. It combines four critical components:
+The **n8n_automation_builder** is not just an AI chat. It is a "Cybernetic Factory" that builds n8n automation workflows. It combines four critical components:
 
 * 🧠 **The Brain:** `.cursor/skills/` (Textbooks on n8n syntax and nodes).
 * 📚 **The Memory:** `Reference_Library/` (7,000+ real-world examples).

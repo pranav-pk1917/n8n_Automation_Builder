@@ -141,7 +141,7 @@ n8n_Automation_Builder/                    # Project root
 │   └── n8n_workflows_scraped/           # Organized by category
 │       └── #AllCombined/                # All workflows combined
 ├── MCP_REGISTRY.md                      # MCP server documentation
-├── .CursorRules                         # AI behavior rules (Titan Protocol)
+├── .CursorRules                         # AI behavior rules (Build Protocol)
 ├── AGENTS.md                            # Agent configuration
 ├── manual.md                            # Full operating manual
 ├── .gitignore                           # Git ignore patterns
@@ -152,7 +152,7 @@ n8n_Automation_Builder/                    # Project root
 
 ## Configuration Files Explained
 
-### .CursorRules (Titan Protocol)
+### .CursorRules (Build Protocol)
 
 Defines how the AI agent should behave when building workflows:
 - Phase-based workflow (Interrogation -> Strategy -> Blueprint -> Execution)

@@ -35,7 +35,7 @@ n8n_Automation_Builder/
 ├── Staging_Area/          # Ready-to-deploy workflow templates
 ├── Reference_Library/     # 7000+ n8n workflow reference examples
 ├── MCP_REGISTRY.md       # MCP server status and configuration
-├── .CursorRules          # Titan Protocol rules for AI behavior
+├── .CursorRules          # Build Protocol rules for AI behavior
 ├── AGENTS.md             # Agent configuration
 └── manual.md             # Full operating manual
 ```
@@ -49,7 +49,7 @@ n8n_Automation_Builder/
 
 ## Documentation
 
-- [manual.md](manual.md) - Complete operating manual for the Titan Automation Builder
+- [manual.md](manual.md) - Complete operating manual for n8n_automation_builder
 - [MCP_REGISTRY.md](MCP_REGISTRY.md) - MCP server configuration and status
 
 ## License
