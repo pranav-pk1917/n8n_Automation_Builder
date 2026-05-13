@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+build/
+lib/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.pem
+
+# n8n specific
+.credential/
+credentials/
+workflows/*.json
+!workflows/*.template.json
+
+# Editor
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# MCP and code review
+.code-review-graph/graph.db
+.canvas/
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Reference Library - too large with long filenames
+Reference_Library/

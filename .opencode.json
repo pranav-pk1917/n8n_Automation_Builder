@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "C:\\Users\\prana\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "-m",
+        "code_review_graph",
+        "serve"
+      ],
+      "cwd": "C:\\Users\\prana\\OneDrive\\Documents\\Webley Media\\WebleyTools\\n8n-Scrapper+Builder\\n8n_Automation_Builder",
+      "type": "stdio",
+      "env": []
+    }
+  }
+}

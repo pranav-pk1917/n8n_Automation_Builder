@@ -1,0 +1,110 @@
+{
+  "name": "compy_datascrape_receiver",
+  "nodes": [
+    {
+      "id": "webhook-receiver",
+      "name": "Firecrawl_Callback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "parameters": {
+        "path": "compy-receiver",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "webhookId": "compy-receiver-webhook"
+    },
+    {
+      "id": "update-status-completed",
+      "name": "Update_Job_Status_Completed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [500, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE scrape_jobs SET status = 'COMPLETED', raw_markdown = $1, updated_at = NOW() WHERE id = $2::uuid",
+        "options": {
+          "queryReplacement": "={{ $json.body.data[0].markdown }},={{ $json.body.metadata.jobId }}"
+        }
+      }
+    },
+    {
+      "id": "ai-summarizer",
+      "name": "AI_Content_Summarizer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [750, 300],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.data[0].markdown }}",
+        "options": {
+          "systemMessage": "You are a competitive intelligence analyst. Analyze the following scraped website markdown and extract:\n\n1. **Company Overview**: What the company does, their value proposition\n2. **Products/Services**: Key offerings with brief descriptions\n3. **Target Market**: Who they serve\n4. **Key Differentiators**: What makes them unique\n5. **Pricing Model**: If visible (freemium, subscription, etc.)\n6. **Recent News/Updates**: Any notable announcements\n7. **Technology Stack**: If identifiable\n8. **Team/Leadership**: Key people mentioned\n\nReturn a structured JSON summary optimized for competitive analysis."
+        }
+      }
+    },
+    {
+      "id": "openai-model",
+      "name": "OpenAI_GPT4",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [750, 500],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.3
+        }
+      }
+    },
+    {
+      "id": "save-summary",
+      "name": "Save_Intelligence_Summary",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1000, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE scrape_jobs SET result_summary = $1, status = 'ANALYZED', analyzed_at = NOW() WHERE id = $2::uuid",
+        "options": {
+          "queryReplacement": "={{ $json.output }},={{ $('Firecrawl_Callback').item.json.body.metadata.jobId }}"
+        }
+      }
+    },
+    {
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [200, 100],
+      "parameters": {
+        "color": 5,
+        "width": 900,
+        "height": 150,
+        "content": "## 📥 Competitor Intelligence Receiver\n**Purpose**: Receives Firecrawl webhook callbacks, updates job status, summarizes content with AI, and saves intelligence to Supabase.\n\n**Webhook URL**: After activating, copy the Production URL and paste it in the Dispatcher workflow."
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Firecrawl_Callback": {
+      "main": [[{"node": "Update_Job_Status_Completed", "type": "main", "index": 0}]]
+    },
+    "Update_Job_Status_Completed": {
+      "main": [[{"node": "AI_Content_Summarizer", "type": "main", "index": 0}]]
+    },
+    "OpenAI_GPT4": {
+      "ai_languageModel": [[{"node": "AI_Content_Summarizer", "type": "ai_languageModel", "index": 0}]]
+    },
+    "AI_Content_Summarizer": {
+      "main": [[{"node": "Save_Intelligence_Summary", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "competitor-intelligence-receiver"
+  }
+}
