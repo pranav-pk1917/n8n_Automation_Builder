@@ -1,0 +1,63 @@
+Sub ReplaceAndColor2026InSheet()
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim searchStr As String
+    Dim replaceStr As String
+    Dim startPos As Integer
+    Dim hexColor As Long
+    Dim targetSheetName As String
+    
+    searchStr = "2025"
+    replaceStr = "2026"
+    
+    ' Your exact Hex color #0070C0, written in VBA's BGR format
+    hexColor = &HC07000 
+    
+    ' 1. Prompt you to manually enter the sheet name
+    targetSheetName = InputBox("Enter the exact name of the sheet you want to update:", "Select Target Sheet")
+    
+    ' Exit if you click Cancel or leave it blank
+    If Trim(targetSheetName) = "" Then Exit Sub
+    
+    ' 2. Verify that the sheet actually exists to prevent crashes
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(targetSheetName)
+    On Error GoTo 0
+    
+    If ws Is Nothing Then
+        MsgBox "Could not find a sheet named '" & targetSheetName & "'. Please check the spelling and try again.", vbCritical, "Sheet Not Found"
+        Exit Sub
+    End If
+    
+    ' 3. Set the range to look ONLY at the cells with data on that specific sheet
+    Set rng = ws.UsedRange
+    
+    Application.ScreenUpdating = False ' Speeds up the macro
+    
+    For Each cell In rng
+        ' Skip cells with errors (like #DIV/0!) or formulas
+        If Not IsError(cell.Value) Then
+            If Not cell.HasFormula And InStr(1, cell.Value, searchStr) > 0 Then
+                startPos = 1
+                
+                ' Loop to catch multiple instances in the same cell
+                Do While InStr(startPos, cell.Value, searchStr) > 0
+                    startPos = InStr(startPos, cell.Value, searchStr)
+                    
+                    ' Replace the exact characters
+                    cell.Characters(startPos, Len(searchStr)).Text = replaceStr
+                    
+                    ' Apply your specific Hex color to just those characters
+                    cell.Characters(startPos, Len(replaceStr)).Font.Color = hexColor
+                    
+                    ' Move start position forward so it doesn't get stuck in an infinite loop
+                    startPos = startPos + Len(replaceStr)
+                Loop
+            End If
+        End If
+    Next cell
+    
+    Application.ScreenUpdating = True
+    MsgBox "Replacement complete! '2026' was successfully updated on sheet: " & ws.Name, vbInformation
+End Sub
