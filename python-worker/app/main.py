@@ -75,7 +75,15 @@ def cluster(
         input_count=len(body.keyword_classification_ids),
     )
 
-    supabase = get_supabase()
+    try:
+        supabase = get_supabase()
+    except Exception as exc:
+        log.error("supabase_init_failed", error=str(exc), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Supabase client init failed: {exc}",
+        )
+
     result = cluster_keywords(
         supabase=supabase,
         client_id=body.client_id,
