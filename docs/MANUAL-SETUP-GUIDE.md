@@ -792,43 +792,81 @@ Results: 1 PASS / 0 FAIL
   git status
   ```
   If the repo is not already pushed to GitHub, ask Pranav how he wants to handle that (most likely: keep using the existing repo; do not create a separate repo until Phase 1 is fully shipped per the SEO-Tools layout plan).
-- [ ] 9.2 Go to https://railway.app. Sign in with GitHub.
-- [ ] 9.3 Click **New Project** → **Deploy from GitHub repo**.
-- [ ] 9.4 Authorize Railway to access your GitHub if asked. **Important:** only authorize the specific repo containing SEO-Tools — do not grant access to all repos.
-- [ ] 9.5 Pick the repo containing the `SEO-Tools/` folder.
-- [ ] 9.6 Railway will scan the repo. By default it looks at the root for a `Dockerfile`. We need to point it at the sub-folder. After it provisions an empty service:
+- [x] 9.2 Go to https://railway.app. Sign in with GitHub.
+- [x] 9.3 Click **New Project** → **Deploy from GitHub repo**.
+- [x] 9.4 Authorize Railway to access your GitHub if asked. **Important:** only authorize the specific repo containing SEO-Tools — do not grant access to all repos.
+- [x] 9.5 Pick the repo containing the `SEO-Tools/` folder.
+- [x] 9.6 Railway will scan the repo. By default it looks at the root for a `Dockerfile`. We need to point it at the sub-folder. After it provisions an empty service:
   - Open the service → **Settings** → **Build & Deploy**.
   - **Root Directory:** `SEO-Tools/python-worker`
   - **Builder:** `Dockerfile`
   - Save.
-- [ ] 9.7 In the same Settings page → **Variables** tab, add these environment variables (one at a time, **Add Variable** button):
+- [ ] 9.7 Click the **Variables** tab for the **service** (not "Shared Variables" at project level — those don't automatically reach the service). Add these directly (one at a time, **Add Variable** button):
   - `SUPABASE_URL` — from Section 2
+    https://qpfjpjshpnndimoayiwb.supabase.co
+
   - `SUPABASE_SERVICE_ROLE_KEY` — from Section 2
+----
+"how i found key: 
+How to Find the Supabase `service_role` API Key
+*Note: Supabase recently updated their dashboard UI. The newer `sb_publishable...` and `sb_secret...` keys are now shown by default, while the older JWT-style keys have been moved to a separate tab.*
+
+To locate your `service_role` key (the string starting with `eyJ...`), follow these steps:
+
+1. Navigate to **Project Settings** in your Supabase dashboard.
+2. Select **API** from the sidebar menu.
+3. In the main panel, look just below the "Configure API keys..." header to find the navigation tabs.
+4. Click on the tab labeled **Legacy anon, service_role API keys** (located next to the default "Publishable and secret API keys" tab).
+5. Locate the row labeled **service_role**.
+6. Click the **eye icon** to reveal your secret key.
+7. Click the **copy icon** to copy the full `` string to your clipboard."
+
+key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmpwanNocG5uZGltb2F5aXdiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc0NDgyNSwiZXhwIjoyMDk0MzIwODI1fQ.1RTqb0WSh2hzHKqrhW8RTKGBsIxRnFIBzNIo9c1ay6A
+-----
+
   - `WORKER_AUTH_TOKEN` — generate a random 32-character string. In PowerShell:
     ```powershell
     -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | ForEach-Object {[char]$_})
     ```
     Copy the output. Save to your password manager.
+    What I got : skayblDKeN3wULj1MimzZfCI69OvpunH
   - `LOG_LEVEL` — `info`
 - [ ] 9.8 Click **Deploy** (or it will redeploy automatically after you save Root Directory). Watch the build logs in the **Deployments** tab. Build takes ~3-5 minutes (HDBSCAN compiles C extensions).
 - [ ] 9.9 Once you see `Application startup complete` in the logs, go to **Settings** → **Networking** → **Generate Domain**. Copy the public URL (looks like `seo-tools-python-worker-production-abcd.up.railway.app`). Save it.
 
+domain: seo-tools-production-c347.up.railway.app
+
 ### Verify section 9
 
+**Worker URL:** `https://seo-tools-production-c347.up.railway.app`
+**WORKER_AUTH_TOKEN:** `skayblDKeN3wULj1MimzZfCI69OvpunH`
+
+Run:
 ```powershell
-$env:WORKER_URL = "https://YOUR.up.railway.app"
-curl.exe -s "$env:WORKER_URL/health"
+powershell -ExecutionPolicy Bypass -File "SEO-Tools/scripts/verify_worker.ps1" `
+  -WorkerUrl   "https://seo-tools-production-c347.up.railway.app" `
+  -WorkerToken "skayblDKeN3wULj1MimzZfCI69OvpunH"
 ```
 
-- [ ] You should see `{"ok":true,"version":"0.1.0"}`.
+Expected output:
+```
+=== Health check ===
+PASS  {"ok":true,"version":"0.1.0"}
 
-```powershell
-$env:WORKER_TOKEN = "your-32-char-token"
-curl.exe -s -X POST "$env:WORKER_URL/cluster" -H "Authorization: Bearer $env:WORKER_TOKEN" -H "Content-Type: application/json" -d '{"client_id":"11111111-1111-1111-1111-111111111111","pipeline_run_id":"22222222-2222-2222-2222-222222222222","keyword_classification_ids":[]}'
+=== Cluster endpoint (empty payload auth test) ===
+PASS  clusters=0, unclustered=0
 ```
 
-- [ ] You should see a JSON response with `"clusters":[],"unclustered_count":0,...` (empty because no real IDs were sent — but the endpoint should respond, proving auth works).
-- [ ] If you get `{"detail":"missing bearer token"}` or `{"detail":"invalid bearer token"}`, the WORKER_AUTH_TOKEN does not match what Railway has.
+**Diagnosis (2026-05-16):** `/health` passed but `/cluster` returned HTTP 500 with empty body. Root-cause investigation across three commits:
+
+1. **Attempt 1 (bad):** Pinned `supabase==2.3.4` — caused build failure due to `httpx` version conflict. Reverted.
+2. **Attempt 2 (commits `1b367e0` + `8addcd4`):** Reverted `supabase==2.11.0`, added global exception handler (so 500 body is never empty), added Supabase connectivity startup probe, added 8-second PostgREST timeout so requests fail fast.
+3. **Real root cause confirmed (2026-05-16):** With the global handler in place, `/cluster` now returns a proper JSON error body: `"ValidationError: Field required — supabase_url / supabase_service_role_key"`. The Railway **Shared Variables** were added at project scope but were not applied to the service itself. The env vars `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are not reaching the worker process.
+
+**Fix required:** In Railway → service → **Variables** tab, add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` directly to the service (not as shared variables), then redeploy.
+
+- [x] `/health` → `PASS {"ok":true,"version":"0.1.0"}` — confirmed 2026-05-16
+- [ ] `/cluster` → `PASS clusters=0, unclustered=0` — pending: fix Railway Variables (see above) then redeploy
 
 ### Common errors
 
