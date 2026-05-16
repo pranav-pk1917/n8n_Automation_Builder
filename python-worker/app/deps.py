@@ -6,6 +6,11 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from supabase import Client, create_client
+from supabase.lib.client_options import ClientOptions
+
+# Keep well under Railway's proxy timeout so FastAPI can write the error body
+# before the connection is closed. Default in supabase-py may be higher.
+_POSTGREST_TIMEOUT = 8  # seconds
 
 
 class Settings(BaseSettings):
@@ -37,4 +42,8 @@ def get_settings() -> Settings:
 @lru_cache(maxsize=1)
 def get_supabase() -> Client:
     settings = get_settings()
-    return create_client(settings.supabase_url, settings.supabase_service_role_key)
+    return create_client(
+        settings.supabase_url,
+        settings.supabase_service_role_key,
+        options=ClientOptions(postgrest_client_timeout=_POSTGREST_TIMEOUT),
+    )

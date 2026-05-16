@@ -28,12 +28,20 @@ log = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Probe Supabase client init at startup so Railway deploy logs show success/failure."""
+    """Probe Supabase connectivity at startup so Railway deploy logs show the result."""
     try:
-        get_supabase()
-        log.info("supabase_init_ok")
+        sb = get_supabase()
+        log.info("supabase_client_created")
+        # Execute a real no-data query to confirm credentials and network reach.
+        # limit(0) costs nothing but verifies PostgREST can reach the DB.
+        resp = sb.table("raw_keywords").select("id").limit(0).execute()
+        log.info("supabase_connectivity_ok", status="ok", data_len=len(resp.data))
     except Exception as exc:
-        log.error("supabase_init_failed_at_startup", error=str(exc), error_type=type(exc).__name__)
+        log.error(
+            "supabase_connectivity_failed",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
     yield
 
 
