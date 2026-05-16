@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 
 from .clustering import cluster_keywords
 from .deps import get_settings, get_supabase
@@ -24,6 +26,17 @@ structlog.configure(
 log = structlog.get_logger()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Probe Supabase client init at startup so Railway deploy logs show success/failure."""
+    try:
+        get_supabase()
+        log.info("supabase_init_ok")
+    except Exception as exc:
+        log.error("supabase_init_failed_at_startup", error=str(exc), error_type=type(exc).__name__)
+    yield
+
+
 app = FastAPI(
     title="SEO-Tools Clustering Worker",
     version="0.1.0",
@@ -32,7 +45,24 @@ app = FastAPI(
         "in Supabase pgvector, returning clusters with canonical head terms "
         "and intra-cluster role assignments."
     ),
+    lifespan=lifespan,
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all handler so 500 bodies are never empty — surfaces real error in Railway HTTP logs."""
+    log.error(
+        "unhandled_exception",
+        path=str(request.url.path),
+        error=str(exc),
+        error_type=type(exc).__name__,
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal error: {type(exc).__name__}: {exc}"},
+    )
 
 
 def _check_auth(authorization: str | None) -> None:
@@ -78,10 +108,10 @@ def cluster(
     try:
         supabase = get_supabase()
     except Exception as exc:
-        log.error("supabase_init_failed", error=str(exc), exc_info=True)
+        log.error("supabase_init_failed", error=str(exc), error_type=type(exc).__name__, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Supabase client init failed: {exc}",
+            detail=f"Supabase client init failed: {type(exc).__name__}: {exc}",
         )
 
     result = cluster_keywords(
