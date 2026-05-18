@@ -1185,10 +1185,12 @@ Invoke-RestMethod -Method Post -Uri $endpoint -ContentType "application/json" `
   -Headers @{ Authorization = "Bearer $jwt" } -Body $body | ConvertTo-Json -Depth 5
 ```
 
-- [ ] You should see a JSON response with `data.posts.nodes` containing at least one post's `title` and `slug`.
-- [ ] Note which path worked (no auth or JWT) — record it here so the n8n credential setup in Section 14 uses the right approach.
+- [x] You should see a JSON response with `data.posts.nodes` containing at least one post's `title` and `slug`.
+- [x] Note which path worked (no auth or JWT) — record it here so the n8n credential setup in Section 14 uses the right approach.
 
-No auth result: _____________ / JWT required: _____________
+No auth result: **PASS** — endpoint publicly readable, no credentials required for Phase 1.
+Verified post returned: title `"Building HIPAA-Compliant n8n Workflows for Healthcare"`, slug `"hipaa-n8n-workflows"`
+JWT required: **No** — JWT Auth plugin is installed for future Phase 2 write access but not needed now.
 
 ### Common errors
 
