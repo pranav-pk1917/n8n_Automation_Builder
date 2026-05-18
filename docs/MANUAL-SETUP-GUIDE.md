@@ -1207,11 +1207,14 @@ Now that everything is provisioned, verify each service can reach the others. **
 
 ### 14A. Configure HITL channel callbacks in Slack
 
-Now that you have the cloudflared public URL:
+> **Elestio users (Section 10B):** your public URL is already known — use `https://n8n-webley-u35816.vm.elestio.app` wherever the steps below say "your tunnel URL".
+> **Local + Cloudflare users (Section 11):** use your named tunnel URL (e.g., `https://n8n-seotools.<your-domain>`).
 
 - [ ] 14.1 Go back to https://api.slack.com/apps → your **SEO-Tools HITL** app.
 - [ ] 14.2 Sidebar → **Interactivity & Shortcuts** → toggle **Interactivity** ON.
-- [ ] 14.3 **Request URL:** `https://n8n-seotools.<your-domain>/webhook/hitl-decision-slack` (use your tunnel URL).
+- [ ] 14.3 **Request URL** — pick the line that matches your setup:
+  - **Elestio:** `https://n8n-webley-u35816.vm.elestio.app/webhook/hitl-decision-slack`
+  - **Local + Cloudflare:** `https://n8n-seotools.<your-domain>/webhook/hitl-decision-slack`
 - [ ] 14.4 **Save Changes**.
 
 (For Telegram, n8n sets the webhook automatically via its Telegram Trigger node. No manual step here.)
@@ -1233,9 +1236,13 @@ For each item, run the listed test. Tick the checkbox once it passes.
 
 - [ ] **n8n -> Slack:** in n8n, **Credentials** → **New** → **Slack API** (name `Slack_SEOTools`) → use OAuth2 flow (sign in with the Slack account that installed the bot) → **Save**. Test with a Slack node posting `"connectivity test"` to `#seo-tools-hitl`. Should appear in Slack.
 
-- [ ] **Slack -> n8n:** in n8n, create a temporary workflow with a **Webhook** node at path `hitl-decision-slack-test`, set Method = POST, **Activate** the workflow. From PowerShell:
+- [ ] **Slack -> n8n:** in n8n, create a temporary workflow with a **Webhook** node at path `hitl-decision-slack-test`, set Method = POST, **Activate** the workflow. From PowerShell, run the line that matches your setup:
   ```powershell
-  curl.exe -X POST "https://n8n-seotools.<your-domain>/webhook/hitl-decision-slack-test" -H "Content-Type: application/json" -d '{"test":"slack to n8n"}'
+  # Elestio:
+  Invoke-RestMethod -Method Post -Uri "https://n8n-webley-u35816.vm.elestio.app/webhook/hitl-decision-slack-test" -ContentType "application/json" -Body '{"test":"slack to n8n"}'
+
+  # Local + Cloudflare:
+  Invoke-RestMethod -Method Post -Uri "https://n8n-seotools.<your-domain>/webhook/hitl-decision-slack-test" -ContentType "application/json" -Body '{"test":"slack to n8n"}'
   ```
   In n8n's execution log, you should see the request received. Then delete the test workflow.
 
@@ -1243,7 +1250,7 @@ For each item, run the listed test. Tick the checkbox once it passes.
 
 - [ ] **Telegram -> n8n** (if configured): create a temporary workflow with a **Telegram Trigger** node → connect the credential → activate. Send `/start` in your Telegram group. n8n should log the incoming message. Delete the test workflow.
 
-- [ ] **n8n -> WPGraphQL:** **Credentials** → **New** → **HTTP Header Auth** (name `WPGraphQL_SEOTools`) → if auth is configured, set the header; if open endpoint, you can skip the credential. Test with an HTTP Request POST to the GraphQL endpoint with a simple query. Should return WordPress post data.
+- [x] **n8n -> WPGraphQL:** **No credential needed** — Section 13 confirmed the endpoint `https://cms.webleymedia.com/graphql` is publicly readable without authentication. In n8n, HTTP Request nodes calling this endpoint need no Auth set. Test with an HTTP Request node: Method POST, URL `https://cms.webleymedia.com/graphql`, Body (JSON) `{"query":"{ posts(first:1){ nodes{ title slug } } }"}` — should return post data.
 
 - [ ] **n8n -> Google Sheets** (if 12 completed): **Credentials** → **New** → **Google Sheets OAuth2 API** (name `GoogleSheets_SEOTools`) → paste Client ID + Secret → click **Sign in with Google** → complete OAuth → **Save**. Test with a Google Sheets node reading the master spreadsheet — should return the tab names.
 
@@ -1282,7 +1289,9 @@ The agent will read your handoff, validate the credentials, and start building t
 | Cloudflare Zero Trust | https://one.dash.cloudflare.com |
 | Google Cloud Console | https://console.cloud.google.com |
 | n8n (local) | http://localhost:5678 |
-| n8n (public) | https://n8n-seotools.&lt;your-domain&gt; |
+| n8n (Elestio — online) | https://n8n-webley-u35816.vm.elestio.app |
+| n8n (Cloudflare tunnel) | https://n8n-seotools.&lt;your-domain&gt; |
+| WPGraphQL endpoint | https://cms.webleymedia.com/graphql |
 
 ---
 
