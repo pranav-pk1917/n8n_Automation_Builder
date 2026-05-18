@@ -965,8 +965,8 @@ docker compose logs -f n8n  # tail logs
 
 ### Steps
 
-- [ ] 10B.1 Open `https://n8n-webley-u35816.vm.elestio.app/` in your browser.
-- [ ] 10B.2 On the first-time setup screen, create the owner account:
+- [x] 10B.1 Open `https://n8n-webley-u35816.vm.elestio.app/` in your browser.
+- [x] 10B.2 On the first-time setup screen, create the owner account:
   - **Email** — your business email (e.g., `pranav@webley.media`)
   - **First name / Last name** — your name
   - **Password** — 12+ characters; save to your password manager
@@ -995,8 +995,8 @@ docker compose logs -f n8n  # tail logs
 
 ### Verify section 10B
 
-- [ ] `https://n8n-webley-u35816.vm.elestio.app/` loads the n8n UI from your phone on cellular (not on your home Wi-Fi) — confirms it is truly public.
-- [ ] Browser shows valid HTTPS (closed padlock) with a certificate issued to `*.vm.elestio.app`.
+- [x] `https://n8n-webley-u35816.vm.elestio.app/` loads the n8n UI from your phone on cellular (not on your home Wi-Fi) — confirms it is truly public.
+- [x] Browser shows valid HTTPS (closed padlock) with a certificate issued to `*.vm.elestio.app`.
 
 ### Common errors
 
@@ -1094,11 +1094,11 @@ We will use **Cloudflare Tunnel** because it is free, requires no port forwardin
 
 ### Steps
 
-- [ ] 12.1 Go to https://console.cloud.google.com. Sign in.
-- [ ] 12.2 Create a new project: top-bar project selector → **New Project** → Name `webley-seo-tools` → **Create**.
-- [ ] 12.3 In the search bar at the top, type **Google Sheets API** → click the result → **Enable**.
-- [ ] 12.4 Search for **Google Drive API** → **Enable** (n8n needs both).
-- [ ] 12.5 Sidebar → **APIs & Services** → **OAuth consent screen**:
+- [x] 12.1 Go to https://console.cloud.google.com. Sign in.
+- [x] 12.2 Create a new project: top-bar project selector → **New Project** → Name `webley-seo-tools` → **Create**.
+- [x] 12.3 In the search bar at the top, type **Google Sheets API** → click the result → **Enable**.
+- [x] 12.4 Search for **Google Drive API** → **Enable** (n8n needs both).
+- [x] 12.5 Sidebar → **APIs & Services** → **OAuth consent screen**:
   - **User Type:** External (unless you have Google Workspace) → **Create**.
   - **App name:** `SEO-Tools Sheet Sync`
   - **User support email:** your email
@@ -1121,6 +1121,10 @@ We will use **Cloudflare Tunnel** because it is free, requires no port forwardin
   - Add tabs (rename Sheet1 to `Visibility`, then add `Performance`, `Creative`, `Infrastructure`, `Uncategorized`, `Niches`, `Themes`, `Audit`, `Cross-Validation`, `Cost`, `Taxonomy-Suggestions`).
   - Copy the spreadsheet ID from the URL (`https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit`). Save it.
 
+
+OAuth creds
+Client ID: 177243875957-qfklbkpdu53cddkbdmlrq42e4jjee9po.apps.googleusercontent.com
+Client Secret: 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
 ### Verify section 12
 
 We will verify in Section 14 by adding the OAuth credential to n8n and running a test write.
@@ -1138,27 +1142,60 @@ We will verify in Section 14 by adding the OAuth credential to n8n and running a
 
 ### Steps
 
-- [ ] 13.1 Ask Pranav for the WordPress admin URL (typically `https://wp.webleymedia.com/wp-admin` or similar). Log in.
-- [ ] 13.2 Sidebar → **Plugins** → **Installed Plugins**. Confirm **WPGraphQL** is in the list and **Active**. If not, install it from **Plugins** → **Add New** → search "WPGraphQL" → Install → Activate.
-- [ ] 13.3 Sidebar → **GraphQL** → **Settings**. Note the **GraphQL Endpoint** URL (typically `https://wp.webleymedia.com/graphql`).
-- [ ] 13.4 Decide on auth:
-  - **No auth** — easiest, fine if the endpoint is read-only and not exposing sensitive draft content. Confirm with Pranav.
-  - **JWT auth** — if you need write access (for Phase 2). Install the **WPGraphQL JWT Authentication** plugin and follow its setup. **Skip for Phase 1.**
+- [x] 13.1 Ask Pranav for the WordPress admin URL (typically `https://wp.webleymedia.com/wp-admin` or similar). Log in.
+https://cms.webleymedia.com/wp-admin/
+- [x] 13.2 Sidebar → **Plugins** → **Installed Plugins**. Confirm **WPGraphQL** is in the list and **Active**. If 
+not, install it from **Plugins** → **Add New** → search "WPGraphQL" → Install → Activate.
+- [x] 13.3 Sidebar → **GraphQL** → **Settings**. Note the **GraphQL Endpoint** URL (typically `https://wp.webleymedia.com/graphql`).
+https://cms.webleymedia.com/graphql
+
+- [x] 13.4 Auth decision: **JWT Auth plugin is already installed and configured** on `cms.webleymedia.com` (Secret Key configured, endpoints active, RFC 7519 compliant — confirmed via WordPress dashboard). For Phase 1 (read-only queries), first try without auth. If that fails, use the JWT path below. Write access (Phase 2) will use JWT.
 
 ### Verify section 13
 
+**Step 1 — Try without auth first (works for published posts in most WPGraphQL installs):**
+
 ```powershell
-$env:WPGRAPHQL_ENDPOINT = "https://wp.webleymedia.com/graphql"
-curl.exe -s -X POST "$env:WPGRAPHQL_ENDPOINT" -H "Content-Type: application/json" --data '{"query":"{ posts(first: 1) { nodes { title slug } } }"}'
+$endpoint = "https://cms.webleymedia.com/graphql"
+$body = '{"query":"{ posts(first: 1) { nodes { title slug } } }"}'
+Invoke-RestMethod -Method Post -Uri $endpoint -ContentType "application/json" -Body $body | ConvertTo-Json -Depth 5
 ```
 
-- [ ] You should see a JSON response with a `data.posts.nodes` array. If `errors` field is present and says auth required, talk to Pranav about how to authenticate.
+- **If you see `data.posts.nodes` with post data** → no auth needed for Phase 1. Check this box and move on.
+- **If you see an error like `"Not logged in"` or HTTP 401** → the endpoint requires auth. Use Step 2 below.
+
+**Step 2 — JWT auth path (only needed if Step 1 fails):**
+
+First, get a JWT token using a WordPress user account:
+
+```powershell
+$tokenResp = Invoke-RestMethod -Method Post -Uri "https://cms.webleymedia.com/wp-json/jwt-auth/v1/token" `
+  -ContentType "application/json" `
+  -Body '{"username":"YOUR_WP_USERNAME","password":"YOUR_WP_PASSWORD"}'
+$jwt = $tokenResp.token
+Write-Host "Token: $jwt"
+```
+
+Then use the token in the GraphQL request:
+
+```powershell
+$endpoint = "https://cms.webleymedia.com/graphql"
+$body = '{"query":"{ posts(first: 1) { nodes { title slug } } }"}'
+Invoke-RestMethod -Method Post -Uri $endpoint -ContentType "application/json" `
+  -Headers @{ Authorization = "Bearer $jwt" } -Body $body | ConvertTo-Json -Depth 5
+```
+
+- [ ] You should see a JSON response with `data.posts.nodes` containing at least one post's `title` and `slug`.
+- [ ] Note which path worked (no auth or JWT) — record it here so the n8n credential setup in Section 14 uses the right approach.
+
+No auth result: _____________ / JWT required: _____________
 
 ### Common errors
 
 - **`GraphQL not enabled` or 404** — WPGraphQL plugin is not active. Re-check Section 13.2.
-- **HTTP 401 / 403** — endpoint requires auth. Either disable auth on the WPGraphQL settings page or set up JWT.
-- **CORS errors** — n8n calls server-side, so CORS does not affect us. If you see CORS in browser dev tools while testing manually, ignore.
+- **Step 1 returns `"Not logged in"` but Step 2 also fails** — the WP username/password is wrong. Use your actual WordPress admin credentials (the ones you log into `cms.webleymedia.com/wp-admin` with).
+- **`jwt_auth_bad_config` error** — the JWT Secret Key in the plugin settings is not saved. Go to **WordPress** → **JWT Auth** → verify Secret Key is set.
+- **CORS errors** — n8n calls server-side, so CORS does not affect it. If you see CORS in browser dev tools while testing manually, ignore it.
 
 ---
 
