@@ -1210,31 +1210,62 @@ Now that everything is provisioned, verify each service can reach the others. **
 > **Elestio users (Section 10B):** your public URL is already known — use `https://n8n-webley-u35816.vm.elestio.app` wherever the steps below say "your tunnel URL".
 > **Local + Cloudflare users (Section 11):** use your named tunnel URL (e.g., `https://n8n-seotools.<your-domain>`).
 
-- [ ] 14.1 Go back to https://api.slack.com/apps → your **SEO-Tools HITL** app.
-- [ ] 14.2 Sidebar → **Interactivity & Shortcuts** → toggle **Interactivity** ON.
-- [ ] 14.3 **Request URL** — pick the line that matches your setup:
+- [x] 14.1 Go back to https://api.slack.com/apps → your **SEO-Tools HITL** app.
+- [x] 14.2 Sidebar → **Interactivity & Shortcuts** → toggle **Interactivity** ON.
+- [x] 14.3 **Request URL** — pick the line that matches your setup:
   - **Elestio:** `https://n8n-webley-u35816.vm.elestio.app/webhook/hitl-decision-slack`
   - **Local + Cloudflare:** `https://n8n-seotools.<your-domain>/webhook/hitl-decision-slack`
-- [ ] 14.4 **Save Changes**.
+- [x] 14.4 **Save Changes**.
 
 (For Telegram, n8n sets the webhook automatically via its Telegram Trigger node. No manual step here.)
 
 ### 14B. Connectivity matrix
 
-For each item, run the listed test. Tick the checkbox once it passes.
+For each item, run the listed test. Tick the checkbox once it passes. Keys already recorded in this guide are shown under each item — copy from there directly.
+
+---
 
 - [ ] **n8n -> Supabase:** in n8n, **Credentials** → **New** → **Supabase API** (name `Supabase_SEOTools`) → paste URL + service_role key → **Save**. Test from a temporary workflow with one Supabase node querying `select count(*) from clients`. Should return `2`.
 
-- [ ] **n8n -> OpenRouter:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `OpenRouter_SEOTools`) → Header name `Authorization`, Value `Bearer YOUR_OPENROUTER_KEY` (paste the actual `sk-or-v1-...` key) → **Save**. In a temporary workflow, add an **HTTP Request** node:
+  > **Keys from this guide (Section 2 / Section 9):**
+  > - **Host (Project URL):** `https://qpfjpjshpnndimoayiwb.supabase.co`
+  > - **Service Role Secret:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmpwanNocG5uZGltb2F5aXdiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc0NDgyNSwiZXhwIjoyMDk0MzIwODI1fQ.1RTqb0WSh2hzHKqrhW8RTKGBsIxRnFIBzNIo9c1ay6A`
+
+---
+
+- [ ] **n8n -> OpenRouter:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `OpenRouter_SEOTools`) → Header name `Authorization`, Value `Bearer sk-or-v1-...` (see key below) → **Save**. In a temporary workflow, add an **HTTP Request** node:
   - **Method:** POST
   - **URL:** `https://openrouter.ai/api/v1/chat/completions`
   - **Authentication:** Generic Credential Type → HTTP Header Auth → `OpenRouter_SEOTools`
   - **Body (JSON):** `{"model":"google/gemini-2.0-flash-001","messages":[{"role":"user","content":"reply with the single word ok"}]}`
   - Execute. Should return JSON with `choices[0].message.content` containing `ok`. Repeat with the embeddings endpoint (`/embeddings`, body `{"model":"openai/text-embedding-3-small","input":"hello","dimensions":768}`) and confirm `data[0].embedding` has 768 floats.
 
-- [ ] **n8n -> Python worker:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `PythonWorker_SEOTools`) → Header name `Authorization`, Value `Bearer <WORKER_AUTH_TOKEN>` → **Save**. Test with an HTTP Request node calling `<WORKER_URL>/health`. Should return `{"ok":true,...}`.
+  > **Keys from this guide (Section 5 / Verification run log):**
+  > - **Header name:** `Authorization`
+  > - **Header value:** `Bearer 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`
+  > - All 3 models verified PASS on 2026-05-15.
+
+---
+
+- [ ] **n8n -> Python worker:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `PythonWorker_SEOTools`) → Header name `Authorization`, Value `Bearer <token below>` → **Save**. Test with an HTTP Request node calling `<worker URL>/health`. Should return `{"ok":true,...}`.
+
+  > **Keys from this guide (Section 9):**
+  > - **Header name:** `Authorization`
+  > - **Header value:** `Bearer skayblDKeN3wULj1MimzZfCI69OvpunH`
+  > - **Worker base URL:** `https://seo-tools-production-c347.up.railway.app`
+  > - **Health check URL:** `https://seo-tools-production-c347.up.railway.app/health`
+  > - Note: `/cluster` endpoint still pending Railway env var fix (see Section 9 diagnosis).
+
+---
 
 - [ ] **n8n -> Slack:** in n8n, **Credentials** → **New** → **Slack API** (name `Slack_SEOTools`) → use OAuth2 flow (sign in with the Slack account that installed the bot) → **Save**. Test with a Slack node posting `"connectivity test"` to `#seo-tools-hitl`. Should appear in Slack.
+
+  > **Keys from this guide (Section 7 / Verification run log):**
+  > - **Bot User OAuth Token:** `xoxb-11122421376323-11134110887429-nhwtxduxAESuSwFCFzhC9m6e`
+  > - **Channel ID** for `#seo-tools-hitl`: `C0B43A7QG5P`
+  > - Verified PASS on 2026-05-15.
+
+---
 
 - [ ] **Slack -> n8n:** in n8n, create a temporary workflow with a **Webhook** node at path `hitl-decision-slack-test`, set Method = POST, **Activate** the workflow. From PowerShell, run the line that matches your setup:
   ```powershell
@@ -1246,13 +1277,43 @@ For each item, run the listed test. Tick the checkbox once it passes.
   ```
   In n8n's execution log, you should see the request received. Then delete the test workflow.
 
+  > **No extra credentials needed** — this tests inbound webhook delivery, not outbound auth. The Slack app's Request URL (set in step 14.3) must point to the correct Elestio or Cloudflare URL.
+
+---
+
 - [ ] **n8n -> Telegram** (if configured): **Credentials** → **New** → **Telegram API** (name `Telegram_SEOTools`) → paste token → **Save**. Test with a Telegram node sending to your chat ID. Message should appear.
 
-- [ ] **Telegram -> n8n** (if configured): create a temporary workflow with a **Telegram Trigger** node → connect the credential → activate. Send `/start` in your Telegram group. n8n should log the incoming message. Delete the test workflow.
+  > **Keys from this guide (Section 8 / Verification run log):**
+  > - **Bot Token:** `8616386423:AAHhENvweAI4Qc88vg92Dp09i0kauKopbac`
+  > - **Bot username:** `@webley_seotools_hitl_bot`
+  > - **Chat ID** (SEO-Tools HITL group): `-4993060055`
+  > - Verified PASS on 2026-05-15.
+
+---
+
+- [ ] **Telegram -> n8n** (if configured): create a temporary workflow with a **Telegram Trigger** node → connect the `Telegram_SEOTools` credential → activate. Send `/start` in your Telegram group. n8n should log the incoming message. Delete the test workflow.
+
+  > **Keys from this guide:** same bot token and chat ID as above.
+
+---
 
 - [x] **n8n -> WPGraphQL:** **No credential needed** — Section 13 confirmed the endpoint `https://cms.webleymedia.com/graphql` is publicly readable without authentication. In n8n, HTTP Request nodes calling this endpoint need no Auth set. Test with an HTTP Request node: Method POST, URL `https://cms.webleymedia.com/graphql`, Body (JSON) `{"query":"{ posts(first:1){ nodes{ title slug } } }"}` — should return post data.
 
-- [ ] **n8n -> Google Sheets** (if 12 completed): **Credentials** → **New** → **Google Sheets OAuth2 API** (name `GoogleSheets_SEOTools`) → paste Client ID + Secret → click **Sign in with Google** → complete OAuth → **Save**. Test with a Google Sheets node reading the master spreadsheet — should return the tab names.
+  > **Verified PASS (no auth)** on 2026-05-18. Returned post: "Building HIPAA-Compliant n8n Workflows for Healthcare".
+
+---
+
+- [ ] **n8n -> Google Sheets** (if Section 12 completed): **Credentials** → **New** → **Google Sheets OAuth2 API** (name `GoogleSheets_SEOTools`) → paste Client ID + Secret → click **Sign in with Google** → complete OAuth → **Save**. Test with a Google Sheets node reading the master spreadsheet — should return the tab names.
+
+  > **Keys from this guide:** Section 12 is marked optional for Phase 1 and has not been completed yet. To find Client ID + Secret: Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs → `SEO-Tools n8n` → Download JSON.
+
+---
+
+- [ ] **n8n -> SerpAPI** (if Section 6 completed, needed for WF-04): **Credentials** → **New** → **SerpAPI** (name `SerpAPI_SEOTools`) → paste API key → **Save**.
+
+  > **Keys from this guide (Section 6 / Verification run log):**
+  > - **API Key:** `c68aa5b90d549f985c2f394a14628116f5465202fe13b1dbc34ea76de5564c2c`
+  > - Verified PASS on 2026-05-15.
 
 ### Verify section 14
 
