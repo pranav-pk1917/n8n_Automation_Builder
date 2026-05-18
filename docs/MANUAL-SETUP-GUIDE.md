@@ -878,6 +878,8 @@ PASS  clusters=0, unclustered=0
 
 ## 10. Run n8n locally in Docker
 
+> **Already using Elestio-hosted n8n?** Skip Sections 10 and 11 entirely — go straight to **Section 10B** below.
+
 **What you're doing:** running an n8n instance on your laptop in a Docker container. Data persists in a Docker volume so restarts do not lose workflows.
 
 ### Steps
@@ -924,15 +926,19 @@ PASS  clusters=0, unclustered=0
   docker compose ps
   ```
   You should see the `n8n` service `running`.
-- [ ] 10.5 Open http://localhost:5678 in your browser.
-- [ ] 10.6 Create the owner account: email, first/last name, password. Save credentials to your password manager.
-- [ ] 10.7 Skip the survey screens.
+- [x] 10.5 Open http://localhost:5678 in your browser.
+- [x] 10.6 Create the owner account: email, first/last name, password. Save credentials to your password manager.
+- [x] 10.7 Skip the survey screens.
 - [ ] 10.8 Once at the n8n home, click your avatar (top-right) → **Settings** → **API**. Click **Create an API key**. Label it `seo-tools-agent`. Copy the key. Save it.
+
+Api key (local n8n): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmNDQ2YzQ3MS02YzMwLTQyY2QtYTliOS1hMjkxM2UxZGFmZTIiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNTljZDEyZDAtYzY1Zi00ZjhhLTliYzAtNjc1MmRjZmIwYTQ2IiwiaWF0IjoxNzc5MDk4MzE0fQ.rwZ7tYlSj9DC2tChD4xvuUibIMyGUYaL_lmBRrz0GJE
+
+API Key (elest.io): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhN2MwNDJlNS05ZTI4LTQ3ZmYtOTdmNC0xYmYyNzI3MWIyOTgiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNGI2ZmM1MDgtZDAxNi00NTA1LTk4NWUtZDhlYWJiYjk4MzNhIiwiaWF0IjoxNzc5MTAwODU3fQ.7KwNdMLf9-q6tnl_2IrN_Y2eSIsLlkJdbpDx639Av24
 
 ### Verify section 10
 
-- [ ] http://localhost:5678 loads the n8n UI.
-- [ ] You can create a "Hello World" workflow with a Manual Trigger → Set node and execute it once.
+- [x] http://localhost:5678 loads the n8n UI.
+- [x] You can create a "Hello World" workflow with a Manual Trigger → Set node and execute it once.
 
 ### Common errors
 
@@ -951,7 +957,63 @@ docker compose logs -f n8n  # tail logs
 
 ---
 
+## 10B. Use Elestio-hosted n8n (online, accessible from anywhere)
+
+**What you're doing:** using a managed cloud n8n instance on Elestio. It runs 24/7, has a valid HTTPS certificate, and is reachable from any browser or from Slack/Telegram webhooks without a Cloudflare tunnel. **This replaces Sections 10 and 11 for your setup.**
+
+**Instance URL:** `https://n8n-webley-u35816.vm.elestio.app/`
+
+### Steps
+
+- [ ] 10B.1 Open `https://n8n-webley-u35816.vm.elestio.app/` in your browser.
+- [ ] 10B.2 On the first-time setup screen, create the owner account:
+  - **Email** — your business email (e.g., `pranav@webley.media`)
+  - **First name / Last name** — your name
+  - **Password** — 12+ characters; save to your password manager
+  - Click **Get started**. Skip the survey screen.
+  - If a login page appears instead of the setup screen, the owner account was pre-created by Elestio. Check your Elestio dashboard → **Service info** for the default credentials, log in, and change the password immediately.
+- [ ] 10B.3 Click your avatar (top-right) → **Settings** → **API** → **Create an API key**.
+  - Label: `seo-tools-agent`
+  - Copy the key (starts with `n8n_api_...`). Save to password manager and paste into HANDOFF-TEMPLATE under `N8N_API_KEY`.
+
+  API Key (elest.io): `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhN2MwNDJlNS05ZTI4LTQ3ZmYtOTdmNC0xYmYyNzI3MWIyOTgiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNGI2ZmM1MDgtZDAxNi00NTA1LTk4NWUtZDhlYWJiYjk4MzNhIiwiaWF0IjoxNzc5MTAwODU3fQ.7KwNdMLf9-q6tnl_2IrN_Y2eSIsLlkJdbpDx639Av24`
+
+- [ ] 10B.4 Verify required environment variables are set. In Elestio:
+  - Go to your Elestio dashboard → **SEO-Tools n8n** service → **Env Vars** tab (or **Software config** tab depending on your Elestio version).
+  - Confirm or add:
+
+  | Variable | Value |
+  |---|---|
+  | `GENERIC_TIMEZONE` | `Asia/Kolkata` |
+  | `N8N_RUNNERS_ENABLED` | `true` |
+  | `N8N_BLOCK_ENV_ACCESS_IN_NODE` | `false` |
+  | `WEBHOOK_URL` | `https://n8n-webley-u35816.vm.elestio.app/` |
+
+  Elestio typically sets `WEBHOOK_URL` automatically to your instance URL. Verify it matches exactly (including the trailing slash). Save and let the service restart if prompted.
+
+- [ ] 10B.5 Quick smoke test: **+ New Workflow** → drag a **Manual Trigger** node → drag an **Edit Fields (Set)** node → connect them → click **Test workflow**. Should show "Workflow executed successfully". Delete the test workflow.
+
+### Verify section 10B
+
+- [ ] `https://n8n-webley-u35816.vm.elestio.app/` loads the n8n UI from your phone on cellular (not on your home Wi-Fi) — confirms it is truly public.
+- [ ] Browser shows valid HTTPS (closed padlock) with a certificate issued to `*.vm.elestio.app`.
+
+### Common errors
+
+- **Login page instead of setup screen** — the owner account already exists (Elestio pre-created it). Check your Elestio dashboard → **Service info** for the default credentials. Log in and change the password from **Settings** → **Personal** → **Change Password**.
+- **WEBHOOK_URL mismatch** — n8n webhooks will fail silently if `WEBHOOK_URL` does not exactly match the public URL. Copy-paste it from the browser address bar (no trailing path, just the origin + `/`).
+- **Env var changes don't take effect** — Elestio requires a service restart after env var saves. Click **Restart** in the Elestio dashboard after saving.
+- **Cannot find Env Vars tab** — depending on your Elestio plan, environment variables may be under **Software** → **Env** or **Tools** → **Env Editor**. Look for a page listing `KEY=VALUE` pairs.
+
+### Skipping Section 11
+
+Since Elestio provides a permanent public HTTPS URL, **you do not need Section 11 (Cloudflare tunnel)**. Skip it entirely. Wherever the guide later refers to `https://n8n-seotools.<your-domain>`, substitute `https://n8n-webley-u35816.vm.elestio.app` instead.
+
+---
+
 ## 11. Expose n8n via a Cloudflare tunnel
+
+> **Using Elestio (Section 10B)?** Skip this entire section — your instance is already public HTTPS. Continue to Section 12.
 
 **What you're doing:** giving your local n8n instance a public HTTPS URL so Slack and Telegram can reach it when an intern clicks an "Approve" button in a HITL card. Without this, the local n8n is only reachable from your own laptop.
 
@@ -959,9 +1021,9 @@ We will use **Cloudflare Tunnel** because it is free, requires no port forwardin
 
 ### 11A. Quick tunnel (5 minutes, no Cloudflare account needed, for first-time testing)
 
-- [ ] 11.1 Download `cloudflared` for Windows from https://github.com/cloudflare/cloudflared/releases/latest — file named `cloudflared-windows-amd64.exe`.
-- [ ] 11.2 Rename the file to `cloudflared.exe` and put it in `C:\cloudflared\`. Add `C:\cloudflared\` to your PATH environment variable (Win+R → `sysdm.cpl` → Advanced → Environment Variables → edit Path).
-- [ ] 11.3 Open a new PowerShell window. Verify install:
+- [x] 11.1 Download `cloudflared` for Windows from https://github.com/cloudflare/cloudflared/releases/latest — file named `cloudflared-windows-amd64.exe`.
+- [x] 11.2 Rename the file to `cloudflared.exe` and put it in `C:\cloudflared\`. Add `C:\cloudflared\` to your PATH environment variable (Win+R → `sysdm.cpl` → Advanced → Environment Variables → edit Path).
+- [x] 11.3 Open a new PowerShell window. Verify install:
   ```powershell
   cloudflared --version
   ```
@@ -976,6 +1038,8 @@ We will use **Cloudflare Tunnel** because it is free, requires no port forwardin
   |  https://abc-def-ghi-jkl.trycloudflare.com                                                 |
   +--------------------------------------------------------------------------------------------+
   ```
+
+  url i got : https://problems-medium-sharp-tumor.trycloudflare.com
 - [ ] 11.6 Open that URL in your browser. n8n should load.
 
 **Important:** Quick tunnels die when you close the PowerShell window. They get a new random URL each restart. **Use only for verification.** For day-to-day work, set up a named tunnel (11B).
@@ -1045,7 +1109,10 @@ We will use **Cloudflare Tunnel** because it is free, requires no port forwardin
 - [ ] 12.6 Sidebar → **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID**:
   - **Application type:** Web application
   - **Name:** `SEO-Tools n8n`
-  - **Authorized redirect URIs:** `https://n8n-seotools.<your-domain>/rest/oauth2-credential/callback` (use the cloudflared URL from Section 11). If you are still on a Quick Tunnel, you'll have to redo this each time the URL changes — another reason to set up a named tunnel.
+  - **Authorized redirect URIs:** add the URI that matches your n8n setup (you can add both):
+    - **Local + Cloudflare (Section 11):** `https://n8n-seotools.<your-domain>/rest/oauth2-credential/callback`
+    - **Elestio (Section 10B):** `https://n8n-webley-u35816.vm.elestio.app/rest/oauth2-credential/callback`
+    - If you are still on a Quick Tunnel, you'll have to update this URI each time the URL changes — another reason to use a named tunnel or Elestio.
   - **Create**.
 - [ ] 12.7 A modal shows **Client ID** and **Client Secret**. Copy both. Save to your password manager.
 - [ ] 12.8 Create the master spreadsheet:
