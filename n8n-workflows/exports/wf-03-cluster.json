@@ -1,0 +1,289 @@
+{
+  "name": "WF-03-Cluster",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-03 — Cluster + 3-Axis Labeling + Cannibalization Check\n\n**Purpose:** Call the Python worker to HDBSCAN-cluster passed keyword embeddings, then LLM-label each cluster on the 3-axis taxonomy (service_pillar, vertical_niche, content_theme), run cannibalization check against pages.embedding, and route low-confidence pillar/niche assignments to taxonomy_suggestions.\n\n**Trigger:** POST to `/webhook/wf-03-cluster`\nPayload: `{ client_id, pipeline_run_id? }`\n\n⚠️ Requires Railway /cluster fix to be complete before this workflow will succeed.\n\n**Outputs written to Supabase:**\n- `clusters`\n- `keyword_cluster_map`\n- `taxonomy_suggestions` (if low confidence)\n- `api_cost_log`\n- `pipeline_runs` (kind=cluster)\n\n**Dependent workflows:** WF-04\n**Phase:** 1",
+        "height": 340,
+        "width": 400,
+        "color": 7
+      },
+      "id": "sticky-wf03",
+      "name": "📋 WF-03",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-480, -220]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-03-cluster",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cluster-trigger",
+      "name": "Webhook_Cluster",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "wf-03-cluster"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.client_id) throw new Error('Missing required field: client_id');\nreturn [{ json: { client_id: body.client_id, pipeline_run_id: body.pipeline_run_id || null, started_at: new Date().toISOString() } }];"
+      },
+      "id": "validate-cluster",
+      "name": "Validate_Cluster_Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?id=eq.{{ $json.client_id }}&select=id,config,slug",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-client-wf03",
+      "name": "Fetch_Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/keyword_classifications?client_id=eq.{{ $json.client_id }}&status=eq.passed&select=id,raw_keyword_id,embedding,intent_type,niche_hint,content_theme_hint",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Range", "value": "0-49999" }
+          ]
+        }
+      },
+      "id": "fetch-passed-classifications",
+      "name": "Fetch_Passed_Classifications",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Call the Python worker /cluster endpoint\nconst ctx = $('Validate_Cluster_Payload').first().json;\nconst client = ($('Fetch_Client').first().json || [])[0];\nconst classifications = $input.first().json || [];\n\nif (!Array.isArray(classifications) || classifications.length === 0) {\n  throw new Error('No passed keywords to cluster for client: ' + ctx.client_id);\n}\n\n// Build payload for worker: array of { id, embedding }\nconst items = classifications\n  .filter(c => c.embedding)\n  .map(c => ({ id: c.id, embedding: c.embedding }));\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    client_config: client?.config || {},\n    classification_map: Object.fromEntries(classifications.map(c => [c.id, c])),\n    worker_payload: { items }\n  }\n}];"
+      },
+      "id": "build-cluster-request",
+      "name": "Build_Cluster_Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://seo-tools-production-c347.up.railway.app/cluster",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.worker_payload) }}"
+      },
+      "id": "call-python-worker",
+      "name": "Call_Python_Worker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "python-worker-cred-id", "name": "PythonWorker_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse worker response and prepare per-cluster LLM labeling requests\nconst ctx = $('Build_Cluster_Request').first().json;\nconst workerResp = $input.first().json;\nconst clusters = workerResp?.clusters || [];\n\nif (!clusters.length) {\n  throw new Error('Worker returned 0 clusters. Check /cluster endpoint and Supabase connectivity.');\n}\n\nreturn clusters.map(cluster => ({\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    client_config: ctx.client_config,\n    cluster_id_from_worker: cluster.cluster_id,\n    head_term: cluster.canonical_head_term || cluster.head_term || '',\n    member_ids: cluster.member_ids || [],\n    keyword_count: (cluster.member_ids || []).length,\n    classification_map: ctx.classification_map\n  }\n}));"
+      },
+      "id": "parse-worker-response",
+      "name": "Parse_Worker_Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'google/gemini-2.0-flash-001', messages: [{ role: 'system', content: 'You are an SEO strategist. Assign a keyword cluster to the 3-axis taxonomy. Return ONLY raw JSON with: theme_label, suggested_service_pillar (or null), pillar_assignment_confidence, suggested_vertical_niche (or null), niche_assignment_confidence, content_theme, new_pillar_proposal (or null), new_niche_proposal (or null), reasoning.' }, { role: 'user', content: 'Cluster head term: ' + $json.head_term + '\\nKeyword count: ' + $json.keyword_count + '\\n\\nClient pillars: ' + JSON.stringify(($json.client_config?.service_pillars || []).map(p => p.name)) + '\\nICP: ' + ($json.client_config?.icp_persona || '') + '\\n\\nAssign this cluster on all 3 axes.' }], response_format: { type: 'json_object' }, temperature: 0.2, max_tokens: 512 }) }}"
+      },
+      "id": "llm-label-cluster",
+      "name": "LLM_Label_Cluster",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "openrouter-cred-id", "name": "OpenRouter_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse LLM cluster label and compute cannibalization check\nconst ctx = $('Parse_Worker_Response').item.json;\nconst llmRaw = $input.first().json;\n\nlet label = {};\ntry {\n  label = JSON.parse(llmRaw.choices?.[0]?.message?.content || '{}');\n} catch(e) {\n  label = { theme_label: ctx.head_term, pillar_assignment_confidence: 0, niche_assignment_confidence: 0, content_theme: 'other' };\n}\n\nconst needsTaxonomyReview = (label.pillar_assignment_confidence || 0) < 0.5 || (label.niche_assignment_confidence || 0) < 0.5;\nconst autoAssign = (label.pillar_assignment_confidence || 0) > 0.85;\n\nreturn [{\n  json: {\n    ...ctx,\n    label,\n    needs_taxonomy_review: needsTaxonomyReview,\n    auto_assign: autoAssign,\n    llm_tokens: { input: llmRaw.usage?.prompt_tokens || 0, output: llmRaw.usage?.completion_tokens || 0 }\n  }\n}];"
+      },
+      "id": "parse-cluster-label",
+      "name": "Parse_Cluster_Label",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ client_id: $json.client_id, pipeline_run_id: $json.pipeline_run_id, canonical_head_term: $json.head_term, theme_label: $json.label.theme_label || $json.head_term, suggested_service_pillar: $json.label.suggested_service_pillar || null, pillar_assignment_confidence: $json.label.pillar_assignment_confidence || 0, suggested_vertical_niche_id: null, niche_assignment_confidence: $json.label.niche_assignment_confidence || 0, content_theme: $json.label.content_theme || 'other', keyword_count: $json.keyword_count, last_clustered_at: new Date().toISOString() }) }}"
+      },
+      "id": "write-cluster",
+      "name": "Write_Cluster",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "needs-review",
+              "leftValue": "={{ $json.needs_taxonomy_review }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-needs-taxonomy-review",
+      "name": "IF_Needs_Taxonomy_Review",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2200, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/taxonomy_suggestions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ client_id: $json.client_id, kind: $json.label.new_pillar_proposal ? 'new_pillar' : 'new_niche', suggested_value: $json.label.new_pillar_proposal || $json.label.new_niche_proposal || $json.head_term, rationale: $json.label.reasoning || '', status: 'pending' }) }}"
+      },
+      "id": "write-taxonomy-suggestion",
+      "name": "Write_Taxonomy_Suggestion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, -120],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'C0B43A7QG5P', text: '🏷️ Taxonomy suggestion: ' + $json.head_term, blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '*New taxonomy suggestion for cluster:* `' + $json.head_term + '`\\n*Proposed:* ' + ($json.label.new_pillar_proposal || $json.label.new_niche_proposal || 'low-confidence assignment') + '\\n*Pillar confidence:* ' + (($json.label.pillar_assignment_confidence || 0) * 100).toFixed(0) + '%\\n*Niche confidence:* ' + (($json.label.niche_assignment_confidence || 0) * 100).toFixed(0) + '%\\n*Reasoning:* ' + ($json.label.reasoning || '') + '\\n\\nReview in the Taxonomy-Suggestions tab of the Google Sheet (WF-05 syncs nightly).' } }] }) }}"
+      },
+      "id": "send-taxonomy-slack",
+      "name": "Send_Taxonomy_Slack_Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, -120],
+      "credentials": {
+        "httpHeaderAuth": { "id": "slack-cred-id", "name": "Slack_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: 'clustering_complete' }) }}"
+      },
+      "id": "respond-cluster",
+      "name": "Respond_Cluster",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2420, 100]
+    }
+  ],
+  "connections": {
+    "Webhook_Cluster": { "main": [[{ "node": "Validate_Cluster_Payload", "type": "main", "index": 0 }]] },
+    "Validate_Cluster_Payload": { "main": [[{ "node": "Fetch_Client", "type": "main", "index": 0 }]] },
+    "Fetch_Client": { "main": [[{ "node": "Fetch_Passed_Classifications", "type": "main", "index": 0 }]] },
+    "Fetch_Passed_Classifications": { "main": [[{ "node": "Build_Cluster_Request", "type": "main", "index": 0 }]] },
+    "Build_Cluster_Request": { "main": [[{ "node": "Call_Python_Worker", "type": "main", "index": 0 }]] },
+    "Call_Python_Worker": { "main": [[{ "node": "Parse_Worker_Response", "type": "main", "index": 0 }]] },
+    "Parse_Worker_Response": { "main": [[{ "node": "LLM_Label_Cluster", "type": "main", "index": 0 }]] },
+    "LLM_Label_Cluster": { "main": [[{ "node": "Parse_Cluster_Label", "type": "main", "index": 0 }]] },
+    "Parse_Cluster_Label": { "main": [[{ "node": "Write_Cluster", "type": "main", "index": 0 }]] },
+    "Write_Cluster": { "main": [[{ "node": "IF_Needs_Taxonomy_Review", "type": "main", "index": 0 }]] },
+    "IF_Needs_Taxonomy_Review": {
+      "main": [
+        [{ "node": "Write_Taxonomy_Suggestion", "type": "main", "index": 0 }],
+        [{ "node": "Respond_Cluster", "type": "main", "index": 0 }]
+      ]
+    },
+    "Write_Taxonomy_Suggestion": { "main": [[{ "node": "Send_Taxonomy_Slack_Alert", "type": "main", "index": 0 }]] },
+    "Send_Taxonomy_Slack_Alert": { "main": [[{ "node": "Respond_Cluster", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

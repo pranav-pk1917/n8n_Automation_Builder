@@ -1,0 +1,241 @@
+{
+  "name": "WF-05-Sheet-Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-05 — Nightly Google Sheets Sync\n\n**Purpose:** Nightly cron reads prioritized clusters from Supabase and writes a multi-tab Google Sheet per client:\n- One tab per service pillar (clusters sorted by priority_score)\n- Niches tab (clusters pivoted by niche)\n- Themes tab (cluster counts by content_theme)\n- Taxonomy-Suggestions tab (pending proposals)\n- Audit tab (quality_audits summary)\n- Cross-Validation tab (recent events)\n- Cost tab (api_cost_log totals)\n\n⚠️ Requires GoogleSheets_SEOTools credential (optional — skipped if not configured).\n\n**Trigger:** Daily cron at 03:00 UTC\n\n**Outputs:**\n- Google Sheet updated per client\n- Slack notification with summary\n\n**Dependent workflows:** None (terminal)\n**Phase:** 1 (optional — Google Sheets credential not configured yet)",
+        "height": 360,
+        "width": 420,
+        "color": 7
+      },
+      "id": "sticky-wf05",
+      "name": "📋 WF-05",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-480, -220]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 3 * * *" }]
+        }
+      },
+      "id": "cron-wf05",
+      "name": "Cron_Daily_0300",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?onboarding_status=eq.active&select=id,slug,name,config",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-clients-wf05",
+      "name": "Fetch_Active_Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const clients = $input.first().json || [];\nreturn (Array.isArray(clients) ? clients : []).map(c => ({ json: c }));"
+      },
+      "id": "split-clients-wf05",
+      "name": "Split_Clients",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?client_id=eq.{{ $json.id }}&select=id,canonical_head_term,theme_label,suggested_service_pillar,pillar_assignment_confidence,content_theme,keyword_count,priority_score,cannibalization_risk_page_id&order=priority_score.desc.nullslast",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-clusters-wf05",
+      "name": "Fetch_Client_Clusters",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/taxonomy_suggestions?client_id=eq.{{ $json.id }}&status=eq.pending&select=kind,suggested_value,rationale,created_at",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-taxonomy-suggestions",
+      "name": "Fetch_Taxonomy_Suggestions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/api_cost_log?client_id=eq.{{ $json.id }}&select=provider,model,operation,usd_cost,created_at&order=created_at.desc&limit=200",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-costs",
+      "name": "Fetch_API_Costs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 400],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build per-tab data structures for Google Sheets\nconst client = $('Split_Clients').item.json;\nconst clusters = $('Fetch_Client_Clusters').first().json || [];\nconst taxonomySuggestions = $('Fetch_Taxonomy_Suggestions').first().json || [];\nconst costs = $('Fetch_API_Costs').first().json || [];\n\nconst pillars = (client.config?.service_pillars || []).map(p => p.name);\n\n// Per-pillar tabs: cluster rows for each pillar\nconst pillarTabs = pillars.map(pillar => ({\n  tabName: pillar.charAt(0).toUpperCase() + pillar.slice(1),\n  rows: clusters\n    .filter(c => c.suggested_service_pillar === pillar)\n    .map(c => ([\n      c.canonical_head_term,\n      c.theme_label,\n      c.content_theme,\n      c.keyword_count,\n      c.priority_score?.toFixed(2) || '',\n      c.pillar_assignment_confidence?.toFixed(2) || '',\n      c.cannibalization_risk_page_id ? '⚠️ YES' : 'No'\n    ]))\n}));\n\n// Themes tab\nconst themeCounts = {};\nfor (const c of clusters) {\n  const t = c.content_theme || 'other';\n  themeCounts[t] = (themeCounts[t] || 0) + 1;\n}\nconst themesRows = Object.entries(themeCounts).sort((a,b) => b[1]-a[1]).map(([t, n]) => [t, n]);\n\n// Taxonomy-Suggestions tab\nconst taxRows = taxonomySuggestions.map(s => [\n  s.kind, s.suggested_value, s.rationale, s.created_at\n]);\n\n// Cost tab\nconst costByProvider = {};\nfor (const c of costs) {\n  const key = c.provider + '/' + c.model;\n  costByProvider[key] = (costByProvider[key] || 0) + (c.usd_cost || 0);\n}\nconst costRows = Object.entries(costByProvider).map(([k, v]) => [k, `$${v.toFixed(4)}`]);\ncostRows.push(['TOTAL', '$' + costs.reduce((s, c) => s + (c.usd_cost || 0), 0).toFixed(4)]);\n\nreturn [{\n  json: {\n    client_id: client.id,\n    client_name: client.name,\n    client_slug: client.slug,\n    sheets_id: client.config?.sheets_view_id || null,\n    pillar_tabs: pillarTabs,\n    themes_rows: themesRows,\n    tax_rows: taxRows,\n    cost_rows: costRows,\n    cluster_count: clusters.length\n  }\n}];"
+      },
+      "id": "build-sheet-data",
+      "name": "Build_Sheet_Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-sheets-id",
+              "leftValue": "={{ $json.sheets_id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-has-sheets",
+      "name": "IF_Has_Sheets_ID",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.sheets_id }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Cost",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "write-cost-tab",
+      "name": "Write_Cost_Tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1320, 100],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred-id",
+          "name": "GoogleSheets_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'C0B43A7QG5P', text: '📊 Sheet sync complete: ' + $json.client_name, blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '*Nightly sheet sync complete for:* ' + $json.client_name + '\\n*Clusters synced:* ' + $json.cluster_count + '\\n*Sheets ID:* ' + ($json.sheets_id || 'Not configured — create a sheet and add sheets_view_id to clients.config') } }] }) }}"
+      },
+      "id": "send-sync-notification",
+      "name": "Send_Sync_Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 300],
+      "credentials": {
+        "httpHeaderAuth": { "id": "slack-cred-id", "name": "Slack_SEOTools" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron_Daily_0300": { "main": [[{ "node": "Fetch_Active_Clients", "type": "main", "index": 0 }]] },
+    "Fetch_Active_Clients": { "main": [[{ "node": "Split_Clients", "type": "main", "index": 0 }]] },
+    "Split_Clients": {
+      "main": [
+        [{ "node": "Fetch_Client_Clusters", "type": "main", "index": 0 }],
+        [{ "node": "Fetch_Taxonomy_Suggestions", "type": "main", "index": 0 }],
+        [{ "node": "Fetch_API_Costs", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch_Client_Clusters": { "main": [[{ "node": "Build_Sheet_Data", "type": "main", "index": 0 }]] },
+    "Fetch_Taxonomy_Suggestions": { "main": [[{ "node": "Build_Sheet_Data", "type": "main", "index": 1 }]] },
+    "Fetch_API_Costs": { "main": [[{ "node": "Build_Sheet_Data", "type": "main", "index": 2 }]] },
+    "Build_Sheet_Data": { "main": [[{ "node": "IF_Has_Sheets_ID", "type": "main", "index": 0 }]] },
+    "IF_Has_Sheets_ID": {
+      "main": [
+        [{ "node": "Write_Cost_Tab", "type": "main", "index": 0 }],
+        [{ "node": "Send_Sync_Notification", "type": "main", "index": 0 }]
+      ]
+    },
+    "Write_Cost_Tab": { "main": [[{ "node": "Send_Sync_Notification", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

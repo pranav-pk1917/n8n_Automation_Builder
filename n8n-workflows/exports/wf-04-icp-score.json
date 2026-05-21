@@ -1,0 +1,233 @@
+{
+  "name": "WF-04-ICP-Score",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-04 — ICP Scoring + Priority Score\n\n**Purpose:** For each cluster from WF-03, fetch top-3 SERP results via SerpAPI, run LLM ICP scoring against the client's persona, compute the 3-axis-aware priority_score, and write results back to Supabase. Budget-capped per client.config.monthly_api_budget_usd.\n\n**Trigger:** POST to `/webhook/wf-04-icp-score`\nPayload: `{ client_id, pipeline_run_id? }`\n\n**Priority score formula:**\n```\npriority_score = (commercial_intent_weight * 5)\n               + (icp_match_score * 3)\n               + (log(total_volume+1) * 1)\n               - (avg_kd * 0.5)\n               + (pillar_match_bonus * 1.5)\n               + (niche_focus_bonus * 1)\n               - (cannibalization_risk_penalty * 3)\n```\n\n**Outputs written to Supabase:**\n- `clusters.priority_score`\n- `api_cost_log`\n- `pipeline_runs` (kind=score)\n\n**Dependent workflows:** WF-05\n**Phase:** 1",
+        "height": 380,
+        "width": 420,
+        "color": 7
+      },
+      "id": "sticky-wf04",
+      "name": "📋 WF-04",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-480, -220]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-04-icp-score",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "score-trigger",
+      "name": "Webhook_ICP_Score",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "wf-04-icp-score"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.client_id) throw new Error('Missing required field: client_id');\nreturn [{ json: { client_id: body.client_id, pipeline_run_id: body.pipeline_run_id || null, started_at: new Date().toISOString() } }];"
+      },
+      "id": "validate-score",
+      "name": "Validate_Score_Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?id=eq.{{ $json.client_id }}&select=id,config",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-client-wf04",
+      "name": "Fetch_Client_Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?client_id=eq.{{ $json.client_id }}&priority_score=is.null&select=id,canonical_head_term,theme_label,suggested_service_pillar,pillar_assignment_confidence,content_theme,keyword_count,cannibalization_risk_page_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-unscored-clusters",
+      "name": "Fetch_Unscored_Clusters",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check cost ceiling before starting expensive SerpAPI calls\nconst client = ($('Fetch_Client_Config').first().json || [])[0];\nconst clusters = $input.first().json || [];\nconst ctx = $('Validate_Score_Payload').first().json;\n\nconst budget = client?.config?.monthly_api_budget_usd || 50;\nconst runsPerMonth = client?.config?.expected_runs_per_month || 4;\nconst ceilingPct = client?.config?.per_run_cost_ceiling_pct || 150;\nconst perRunCeiling = (budget / runsPerMonth) * (ceilingPct / 100);\n\n// SerpAPI costs ~$0.01 per search, we do 3 per cluster, cap at 100 clusters\nconst maxClusters = Math.min(100, clusters.length);\nconst estimatedCost = maxClusters * 3 * 0.01;\n\nif (estimatedCost > perRunCeiling) {\n  throw new Error(`Cost ceiling would be exceeded: estimated $${estimatedCost.toFixed(2)} > ceiling $${perRunCeiling.toFixed(2)}. Reduce cluster count or increase budget.`);\n}\n\nreturn clusters.slice(0, maxClusters).map(cluster => ({\n  json: {\n    ...ctx,\n    client_config: client?.config || {},\n    cluster_id: cluster.id,\n    head_term: cluster.canonical_head_term,\n    theme_label: cluster.theme_label,\n    suggested_service_pillar: cluster.suggested_service_pillar,\n    pillar_assignment_confidence: cluster.pillar_assignment_confidence || 0,\n    content_theme: cluster.content_theme,\n    keyword_count: cluster.keyword_count || 0,\n    cannibalization_risk_page_id: cluster.cannibalization_risk_page_id\n  }\n}));"
+      },
+      "id": "check-cost-ceiling",
+      "name": "Check_Cost_Ceiling",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://serpapi.com/search.json?q={{ encodeURIComponent($json.head_term) }}&num=3&api_key={{ $env.SERPAPI_KEY }}"
+      },
+      "id": "serp-search",
+      "name": "SerpAPI_Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse SERP results and build LLM ICP scoring request\nconst ctx = $('Check_Cost_Ceiling').item.json;\nconst serpData = $input.first().json;\n\nconst organicResults = (serpData?.organic_results || []).slice(0, 3).map(r => ({\n  title: r.title || '',\n  snippet: r.snippet || '',\n  link: r.link || ''\n}));\n\nreturn [{\n  json: {\n    ...ctx,\n    serp_results: organicResults,\n    llm_request: {\n      model: 'google/gemini-2.0-flash-001',\n      messages: [\n        {\n          role: 'system',\n          content: 'You are an expert SEO strategist scoring a keyword cluster for B2B ICP fit. Return ONLY raw JSON with: icp_match_score (0-1), icp_match_reasoning, commercial_intent_weight (number per the scale), serp_intent_signals (array of strings), priority_score_inputs object.'\n        },\n        {\n          role: 'user',\n          content: `Score this cluster:\\n\\nHead term: ${ctx.head_term}\\nTheme: ${ctx.theme_label}\\nContent theme: ${ctx.content_theme}\\n\\nSERP results:\\n${JSON.stringify(organicResults, null, 2)}\\n\\nICP persona: ${ctx.client_config?.icp_persona || ''}\\n\\nCommercial intent scale: transactional=5, commercial_investigation=3, navigational_branded=4, local=4, informational=1, navigational_other=0, navigational_competitor=-10\\n\\nReturn: icp_match_score, icp_match_reasoning, commercial_intent_weight, serp_intent_signals, priority_score_inputs (with pillar_match_bonus=1 if pillar assigned else 0, cannibalization_risk_penalty=1 if risk flag else 0).`\n        }\n      ],\n      response_format: { type: 'json_object' },\n      temperature: 0.1,\n      max_tokens: 512\n    }\n  }\n}];"
+      },
+      "id": "build-icp-request",
+      "name": "Build_ICP_Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.llm_request) }}"
+      },
+      "id": "llm-icp-score",
+      "name": "LLM_ICP_Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "openrouter-cred-id", "name": "OpenRouter_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compute final priority_score and update cluster\nconst ctx = $('Build_ICP_Request').item.json;\nconst llmRaw = $input.first().json;\n\nlet scoring = {};\ntry {\n  scoring = JSON.parse(llmRaw.choices?.[0]?.message?.content || '{}');\n} catch(e) {\n  scoring = { icp_match_score: 0.5, commercial_intent_weight: 1 };\n}\n\nconst inputs = scoring.priority_score_inputs || {};\nconst commercial = scoring.commercial_intent_weight || inputs.commercial_intent_weight || 1;\nconst icpScore = scoring.icp_match_score || 0.5;\nconst totalVolume = ctx.keyword_count || 1; // Proxy since we don't have volume aggregated here\nconst avgKd = 0; // Would need to join keyword_classifications — use 0 as safe default\nconst pillarBonus = (ctx.suggested_service_pillar && ctx.pillar_assignment_confidence > 0.5) ? 1 : 0;\nconst nicheBonus = inputs.niche_focus_bonus || 0;\nconst cannibalPenalty = ctx.cannibalization_risk_page_id ? 1 : 0;\n\nconst priorityScore = (commercial * 5)\n  + (icpScore * 3)\n  + (Math.log(totalVolume + 1) * 1)\n  - (avgKd * 0.5)\n  + (pillarBonus * 1.5)\n  + (nicheBonus * 1)\n  - (cannibalPenalty * 3);\n\nconst inputTokens = llmRaw.usage?.prompt_tokens || 0;\nconst outputTokens = llmRaw.usage?.completion_tokens || 0;\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    cluster_id: ctx.cluster_id,\n    priority_score: Math.round(priorityScore * 100) / 100,\n    icp_match_score: icpScore,\n    commercial_intent_weight: commercial,\n    llm_tokens: { input: inputTokens, output: outputTokens },\n    serp_cost: 3 * 0.01\n  }\n}];"
+      },
+      "id": "compute-priority",
+      "name": "Compute_Priority_Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?id=eq.{{ $json.cluster_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ priority_score: $json.priority_score }) }}"
+      },
+      "id": "update-cluster-score",
+      "name": "Update_Cluster_Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/api_cost_log",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify([{ pipeline_run_id: $json.pipeline_run_id, client_id: $json.client_id, provider: 'serpapi', model: 'organic_search', operation: 'icp_serp', input_tokens: 0, output_tokens: 0, usd_cost: $json.serp_cost }, { pipeline_run_id: $json.pipeline_run_id, client_id: $json.client_id, provider: 'openrouter', model: 'google/gemini-2.0-flash-001', operation: 'icp_scoring', input_tokens: $json.llm_tokens.input, output_tokens: $json.llm_tokens.output, usd_cost: ($json.llm_tokens.input * 0.000001) + ($json.llm_tokens.output * 0.000002) }]) }}"
+      },
+      "id": "log-icp-costs",
+      "name": "Log_ICP_Costs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: 'scoring_complete' }) }}"
+      },
+      "id": "respond-score",
+      "name": "Respond_Score",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2420, 0]
+    }
+  ],
+  "connections": {
+    "Webhook_ICP_Score": { "main": [[{ "node": "Validate_Score_Payload", "type": "main", "index": 0 }]] },
+    "Validate_Score_Payload": { "main": [[{ "node": "Fetch_Client_Config", "type": "main", "index": 0 }]] },
+    "Fetch_Client_Config": { "main": [[{ "node": "Fetch_Unscored_Clusters", "type": "main", "index": 0 }]] },
+    "Fetch_Unscored_Clusters": { "main": [[{ "node": "Check_Cost_Ceiling", "type": "main", "index": 0 }]] },
+    "Check_Cost_Ceiling": { "main": [[{ "node": "SerpAPI_Search", "type": "main", "index": 0 }]] },
+    "SerpAPI_Search": { "main": [[{ "node": "Build_ICP_Request", "type": "main", "index": 0 }]] },
+    "Build_ICP_Request": { "main": [[{ "node": "LLM_ICP_Score", "type": "main", "index": 0 }]] },
+    "LLM_ICP_Score": { "main": [[{ "node": "Compute_Priority_Score", "type": "main", "index": 0 }]] },
+    "Compute_Priority_Score": { "main": [[{ "node": "Update_Cluster_Score", "type": "main", "index": 0 }]] },
+    "Update_Cluster_Score": { "main": [[{ "node": "Log_ICP_Costs", "type": "main", "index": 0 }]] },
+    "Log_ICP_Costs": { "main": [[{ "node": "Respond_Score", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

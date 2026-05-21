@@ -1,64 +1,155 @@
-# n8n workflows
+# SEO-Tools — n8n Workflows (Phase 1)
 
-Version-controlled JSON exports of every n8n workflow that powers the pipeline.
+This folder documents the **seven workflows** that power the SEO-Tools keyword pipeline. Each workflow has its own README with features, data flow, and a node-by-node guide.
 
-> The actual workflows live in your n8n instance. This folder is the source of truth for **what they should look like**, so a new n8n instance (or a fresh agency setup) can re-import them from git.
+**n8n instance:** https://n8n-webley-u35816.vm.elestio.app
 
-## Workflows
+---
 
-| File | Workflow | Trigger | Purpose |
-|---|---|---|---|
-| `exports/wf-onboard.json` | WF-ONBOARD | Webhook (`POST /onboard`) or manual | New client onboarding: crawl + LLM site analysis + intern questionnaire + AI cross-validation + writes clients/niches/competitor_brand_names. |
-| `exports/wf-00-page-inventory.json` | WF-00 | Cron daily | Per-client page inventory: crawl sitemap + WPGraphQL + Next.js app router parse. Upserts `pages`. |
-| `exports/wf-01-ingest.json` | WF-01 | Webhook (`POST /ingest`) or manual | CSV ingest from local merged CSV. Normalize + dedupe + graveyard cache check. Bulk insert into `raw_keywords`. |
-| `exports/wf-02-tiered-filter.json` | WF-02 | Trigger (after WF-01) or manual | Tier 0a regex -> Tier 0b competitor-navigational -> Tier 1 embeddings -> Tier 2 LLM. HITL routing by `clients.config.review_tier`. |
-| `exports/wf-03-cluster.json` | WF-03 | Trigger (after WF-02) | Calls Python worker -> HDBSCAN. Persists clusters + role-tagged members. LLM theme labels + pillar/niche assignment. Cannibalization check vs `pages`. |
-| `exports/wf-04-icp-score.json` | WF-04 | Trigger (after WF-03) | SerpAPI top-3 per surviving cluster (budget-capped). LLM ICP scoring. Computes `priority_score`. |
-| `exports/wf-05-sheet-sync.json` | WF-05 | Cron daily | Writes per-client multi-tab Google Sheet (pillars + niches + themes + audit + cost + taxonomy-suggestions). |
-| `exports/wf-hitl-dispatcher.json` | WF-HITL-DISPATCHER | Webhook (HITL response) | Receives Slack/Telegram interactive responses; updates `human_reviews` + `keyword_classifications`; triggers AI second-pass via cross-validation engine. |
-| `exports/wf-quality-audit.json` | WF-QUALITY-AUDIT | Cron nightly | Samples 5-10% of AI-approved keywords into `quality_audits`; computes rolling 30-day agreement rate; alerts on drift. |
-| `exports/wf-cross-validation.json` | WF-CROSS-VALIDATION | Trigger (after human override) | AI second-pass on every human override; logs to `cross_validation_events`; escalates to senior reviewer when both AI and human contradict. |
-| `exports/wf-cost-ceiling-guard.json` | WF-COST-CEILING-GUARD | Subprocess (called from WF-02 / WF-03 / WF-04 before expensive batches) | Calls `check_cost_ceiling` Postgres function; pauses run + alerts if breach predicted. |
+## How the pipeline fits together
 
-## Importing into n8n
+Think of the system as an assembly line. Data moves left to right; each step adds structure.
 
-1. In n8n: **Workflows -> Import from File**.
-2. Pick a JSON from `exports/`.
-3. Reconnect credentials per `credentials.example.md`.
-4. Activate.
+```
+NEW CLIENT
+    │
+    ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│ WF-ONBOARD  │────▶│   WF-00     │     │   WF-01     │
+│ Set up      │     │ Page list   │     │ CSV keywords│
+│ client in   │     │ (daily)     │     │ (on demand) │
+│ Supabase    │     └─────────────┘     └──────┬──────┘
+└─────────────┘                                │
+                                               ▼
+                                        ┌─────────────┐
+                                        │   WF-02     │
+                                        │ Filter bad  │
+                                        │ keywords    │
+                                        └──────┬──────┘
+                                               │
+                                               ▼
+                                        ┌─────────────┐
+                                        │   WF-03     │
+                                        │ Group into  │
+                                        │ clusters    │
+                                        └──────┬──────┘
+                                               │
+                                               ▼
+                                        ┌─────────────┐
+                                        │   WF-04     │
+                                        │ Score ICP + │
+                                        │ priority    │
+                                        └──────┬──────┘
+                                               │
+                                               ▼
+                                        ┌─────────────┐
+                                        │   WF-05     │
+                                        │ Export to   │
+                                        │ Google      │
+                                        │ Sheets      │
+                                        │ (nightly)   │
+                                        └─────────────┘
+```
 
-## Exporting after changes
+**Typical order for a new client:**
 
-When you edit a workflow in the n8n UI:
+1. Run **WF-ONBOARD** once (creates the client record and config).
+2. Upload keywords with **WF-01** (CSV from Ahrefs/Semrush/etc.).
+3. Run **WF-02** → **WF-03** → **WF-04** in sequence (filter → cluster → score).
+4. **WF-00** and **WF-05** run on a schedule once the client is active.
 
-1. Open the workflow.
-2. **Workflow menu -> Download** to get the JSON.
-3. Save it to `exports/<wf-name>.json` (replacing the prior version).
-4. Commit the change.
+---
 
-## Naming conventions
+## Workflow index
 
-- File: `wf-<short-name>.json` (kebab-case).
-- Node names inside the workflow: descriptive verbs (`Verify_Payload`, `HubSpot_Upsert_Lead`). Never the default `HTTP Request` / `Function` names.
-- Sticky notes: every workflow has a top sticky describing what it does, its trigger, its outputs, and which other workflows depend on it.
+| Workflow | n8n name | Trigger | README |
+|----------|----------|---------|--------|
+| Onboarding | WF-ONBOARD | Webhook | [WF-ONBOARD.md](./docs/WF-ONBOARD.md) |
+| Page inventory | WF-00 Page Inventory Sync | Daily 02:00 UTC | [WF-00.md](./docs/WF-00.md) |
+| CSV ingest | WF-01 CSV Keyword Ingest | Webhook | [WF-01.md](./docs/WF-01.md) |
+| Tiered filter | WF-02 Tiered Keyword Filter | Webhook | [WF-02.md](./docs/WF-02.md) |
+| Clustering | WF-03 Clustering + 3-Axis Labeling | Webhook | [WF-03.md](./docs/WF-03.md) |
+| ICP scoring | WF-04 ICP Scoring + Priority Score | Webhook | [WF-04.md](./docs/WF-04.md) |
+| Sheets sync | WF-05 Nightly Google Sheets Sync | Daily 03:00 UTC | [WF-05.md](./docs/WF-05.md) |
 
-## Inter-workflow communication
+**Direct links in n8n:**
 
-Workflows communicate via:
-- **Database state.** WF-01 inserts into `raw_keywords` and a `pipeline_runs` row with `kind='filter'`; WF-02 picks it up via a Supabase trigger or a polling cron.
-- **n8n's "Execute Workflow" node** for synchronous handoffs (e.g., WF-03 calls WF-COST-CEILING-GUARD before each expensive batch).
-- **Webhooks** for HITL responses (Slack / Telegram POST to `WF-HITL-DISPATCHER`).
+| Workflow | Open in n8n |
+|----------|-------------|
+| WF-ONBOARD | https://n8n-webley-u35816.vm.elestio.app/workflow/yMld4MwSr3ZHoxti |
+| WF-00 | https://n8n-webley-u35816.vm.elestio.app/workflow/JM5HNsg6ADp0GW7Q |
+| WF-01 | https://n8n-webley-u35816.vm.elestio.app/workflow/3POshJ2qtKokamIZ |
+| WF-02 | https://n8n-webley-u35816.vm.elestio.app/workflow/WqeKRWzw5NrzzOt0 |
+| WF-03 | https://n8n-webley-u35816.vm.elestio.app/workflow/4H0BClIdgm2LZgjr |
+| WF-04 | https://n8n-webley-u35816.vm.elestio.app/workflow/WVVmNKuwlcf5WcKz |
+| WF-05 | https://n8n-webley-u35816.vm.elestio.app/workflow/PRmymr61yi4Bsqed |
 
-No workflow assumes another is "currently running" — each one re-queries state. This makes them idempotent and recoverable after a pause/restart.
+---
 
-## Building the workflows
+## Credentials (bind before testing)
 
-Phase 1 workflows are built progressively using the `n8n-mcp-official` MCP server. See `docs/architecture.md` for the per-workflow specification. The MCP-based build process:
+Every HTTP node needs the right credential. In n8n: open the workflow → click each red HTTP Request / Google Sheets node → assign the credential from the list below.
 
-1. Search nodes / templates via the MCP.
-2. Get node schemas with `get_node()`.
-3. Build the workflow programmatically using `n8n_create_workflow`.
-4. Validate using `validate_workflow`.
-5. Test in n8n.
-6. Export JSON to `exports/`.
-7. Commit.
+| Credential name in n8n | Type | Used by |
+|------------------------|------|---------|
+| `Supabase_SEOTools` | HTTP Header Auth | All workflows (Supabase REST) |
+| `OpenRouter_SEOTools` | HTTP Header Auth | WF-ONBOARD, WF-00, WF-02, WF-03, WF-04 |
+| `Slack_SEOTools` | HTTP Header Auth | WF-ONBOARD, WF-02, WF-03, WF-05 |
+| `PythonWorker_SEOTools` | HTTP Header Auth | WF-03 (`/cluster` on Railway) |
+| `SerpAPI_SEOTools` | HTTP Query Auth | WF-04 |
+| `GoogleSheets_SEOTools` | Google Sheets OAuth2 | WF-05 |
+
+**n8n environment variables** (Settings → Variables):
+
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for REST API |
+| `PYTHON_WORKER_URL` | Railway worker base URL (no trailing slash) |
+| `GOOGLE_SHEETS_ID` | Spreadsheet ID for WF-05 |
+
+---
+
+## Webhook URL pattern
+
+For webhook workflows, n8n gives you two URLs:
+
+- **Test:** `https://n8n-webley-u35816.vm.elestio.app/webhook-test/<path>`
+- **Production (workflow must be Active):** `https://n8n-webley-u35816.vm.elestio.app/webhook/<path>`
+
+Use **test** while building; switch to **production** when the workflow is activated.
+
+---
+
+## Repo files vs live n8n
+
+| Location | What it is |
+|----------|------------|
+| `exports/*.json` | Full workflow JSON (may include extra nodes vs current n8n deploy) |
+| `sdk/wf-onboard.ts` | Source used to deploy via n8n MCP SDK |
+| `docs/WF-*.md` | Human-readable guides (this documentation) |
+
+If something in n8n does not match an export file, **trust what you see in the n8n editor** — that is what runs.
+
+---
+
+## Supabase tables touched
+
+| Table | Written by |
+|-------|------------|
+| `clients` | WF-ONBOARD |
+| `niches` | WF-ONBOARD |
+| `pipeline_runs` | WF-ONBOARD |
+| `pages` | WF-00 |
+| `raw_keywords` | WF-01 |
+| `keyword_graveyard` | Read by WF-01 (dedupe) |
+| `keyword_classifications` | WF-02 |
+| `keyword_clusters` | WF-03, WF-04 |
+| `api_cost_log` | WF-04 |
+
+---
+
+## Need help?
+
+- Setup checklist: [MANUAL-SETUP-GUIDE.md](../docs/MANUAL-SETUP-GUIDE.md)
+- Handoff after setup: [HANDOFF-TEMPLATE.md](../docs/HANDOFF-TEMPLATE.md)

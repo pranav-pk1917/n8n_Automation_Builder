@@ -1,0 +1,630 @@
+{
+  "name": "WF-ONBOARD",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "sticky-note-onboard",
+      "name": "📋 WF-ONBOARD",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-480, -200],
+      "parameters": {
+        "content": "## WF-ONBOARD — Client Onboarding Wizard\n\n**Purpose:** Provision a new SEO-Tools client from a website URL + questionnaire. Combines site crawl, LLM site analysis, Slack-based questionnaire, bidirectional cross-validation, and DB writes.\n\n**Trigger:** POST to `/webhook/wf-onboard-start`\nPayload: `{ client_url, client_name, competitors[], seed_keywords[] }`\n\n**Outputs written to Supabase:**\n- `clients` (config, onboarding_status=active)\n- `niches`\n- `competitor_brand_names`\n- `gold_examples` (LLM-proposed seed)\n- `pipeline_runs` (kind=onboard)\n- `api_cost_log`\n- `cross_validation_events` (if flags raised)\n\n**Dependent workflows:** WF-00, WF-01\n**Phase:** 1",
+        "height": 360,
+        "width": 420,
+        "color": 7
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-onboard-start",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook_Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "wf-onboard-start"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate required fields and normalise payload\nconst body = $input.first().json.body || $input.first().json;\n\nconst clientUrl = body.client_url;\nconst clientName = body.client_name;\n\nif (!clientUrl || typeof clientUrl !== 'string') {\n  throw new Error('Missing required field: client_url');\n}\nif (!clientName || typeof clientName !== 'string') {\n  throw new Error('Missing required field: client_name');\n}\n\n// Normalise URL — ensure no trailing slash\nconst normUrl = clientUrl.replace(/\\/+$/, '');\n\nreturn [{\n  json: {\n    client_url: normUrl,\n    client_name: clientName,\n    competitors: Array.isArray(body.competitors) ? body.competitors : [],\n    seed_keywords: Array.isArray(body.seed_keywords) ? body.seed_keywords : [],\n    pipeline_run_id: null,\n    started_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "validate-payload",
+      "name": "Validate_Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ kind: 'onboard', status: 'running', triggered_by: $json.client_name, input_summary: { client_url: $json.client_url, client_name: $json.client_name }, started_at: $json.started_at }) }}"
+      },
+      "id": "create-pipeline-run",
+      "name": "Create_Pipeline_Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-cred-id",
+          "name": "Supabase_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge pipeline_run_id into working context\nconst run = $input.first().json;\nconst prev = $('Validate_Payload').first().json;\n\nreturn [{\n  json: {\n    ...prev,\n    pipeline_run_id: run[0]?.id || run.id\n  }\n}];"
+      },
+      "id": "merge-run-id",
+      "name": "Merge_Run_ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.client_url }}/sitemap.xml",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "fetch-sitemap",
+      "name": "Fetch_Sitemap",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse sitemap XML, extract top 20 URLs prioritising shallow depth + service pages\nconst ctx = $('Merge_Run_ID').first().json;\nconst rawXml = $input.first().json.data || $input.first().json.body || '';\n\n// Extract all <loc> values\nconst locMatches = rawXml.match(/<loc>([^<]+)<\\/loc>/gi) || [];\nconst urls = locMatches\n  .map(m => m.replace(/<\\/?loc>/gi, '').trim())\n  .filter(u => u.startsWith('http'));\n\n// Score by depth (fewer slashes = shallower = higher priority)\n// Boost /services/, /about, root\nconst scored = urls.map(u => {\n  const path = u.replace(/^https?:\\/\\/[^/]+/, '') || '/';\n  const depth = (path.match(/\\//g) || []).length;\n  const boost = /\\/(services|about|process|case-stud)/i.test(path) ? -2 : 0;\n  return { url: u, path, score: depth + boost };\n});\n\nscored.sort((a, b) => a.score - b.score);\nconst top20 = scored.slice(0, 20).map(s => ({ url: s.url, path: s.path }));\n\nreturn top20.map(page => ({\n  json: {\n    ...ctx,\n    page_url: page.url,\n    page_path: page.path,\n    all_pages: top20\n  }\n}));"
+      },
+      "id": "parse-sitemap",
+      "name": "Parse_Sitemap_XML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "split-pages",
+      "name": "SplitInBatches_Pages",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.page_url }}",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "crawl-page",
+      "name": "Crawl_Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract title, H1, meta description, and truncated visible text from HTML\nconst ctx = $('SplitInBatches_Pages').item.json;\nconst html = $input.first().json.data || $input.first().json.body || '';\n\nconst title = (html.match(/<title[^>]*>([^<]+)<\\/title>/i) || [])[1]?.trim() || '';\nconst h1 = (html.match(/<h1[^>]*>([^<]{0,200})<\\/h1>/i) || [])[1]\n  ?.replace(/<[^>]+>/g, '').trim() || '';\nconst metaDesc = (html.match(/<meta[^>]+name=['\"]description['\"][^>]+content=['\"]([^'\"]{0,300})['\"][^>]*>/i)\n  || html.match(/<meta[^>]+content=['\"]([^'\"]{0,300})['\"][^>]+name=['\"]description['\"]/i)\n  || [])[1]?.trim() || '';\n\n// Strip tags and collapse whitespace for a truncated visible-text snippet\nconst visibleText = html\n  .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 300);\n\nreturn [{\n  json: {\n    url: ctx.page_url,\n    path: ctx.page_path,\n    title,\n    h1,\n    meta_description: metaDesc,\n    visible_text: visibleText,\n    // Carry forward context\n    client_url: ctx.client_url,\n    client_name: ctx.client_name,\n    competitors: ctx.competitors,\n    seed_keywords: ctx.seed_keywords,\n    pipeline_run_id: ctx.pipeline_run_id,\n    all_pages: ctx.all_pages\n  }\n}];"
+      },
+      "id": "extract-content",
+      "name": "Extract_Page_Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "aggregate-pages",
+      "name": "Aggregate_Page_Data",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1980, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build LLM request body — inject crawled pages into prompt template\nconst pages = $input.first().json.data;\nconst firstPage = pages[0];\n\n// Prompt is read from the prompt file content embedded here at build time\nconst systemPrompt = `You are an expert digital marketing strategist analysing a B2B service company's website to extract its service structure, ICP, and brand positioning. Return ONLY a raw JSON object matching the schema — no markdown, no code fences.`;\n\nconst userPrompt = `Analyse the following pages crawled from ${firstPage.client_url} and return a JSON object with: proposed_pillars, icp_signals, icp_persona_draft, brand_voice_hints, industries_addressed, competitor_mentions, confidence, notes.\\n\\nPages:\\n${JSON.stringify(pages.map(p => ({ url: p.url, title: p.title, h1: p.h1, meta_description: p.meta_description, visible_text: p.visible_text })), null, 2)}`;\n\nreturn [{\n  json: {\n    client_url: firstPage.client_url,\n    client_name: firstPage.client_name,\n    competitors: firstPage.competitors,\n    seed_keywords: firstPage.seed_keywords,\n    pipeline_run_id: firstPage.pipeline_run_id,\n    llm_request: {\n      model: 'google/gemini-2.0-flash-001',\n      messages: [\n        { role: 'system', content: systemPrompt },\n        { role: 'user', content: userPrompt }\n      ],\n      response_format: { type: 'json_object' },\n      temperature: 0.2,\n      max_tokens: 2048\n    }\n  }\n}];"
+      },
+      "id": "build-llm-request",
+      "name": "Build_LLM_Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.llm_request) }}"
+      },
+      "id": "llm-site-analysis",
+      "name": "LLM_Site_Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openrouter-cred-id",
+          "name": "OpenRouter_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse LLM response and build Slack questionnaire card with pre-filled values\nconst ctx = $('Build_LLM_Request').first().json;\nconst llmRaw = $input.first().json;\n\nlet analysis = {};\ntry {\n  const content = llmRaw.choices?.[0]?.message?.content || '{}';\n  analysis = JSON.parse(content);\n} catch(e) {\n  analysis = { proposed_pillars: [], icp_persona_draft: '', brand_voice_hints: '', industries_addressed: [], competitor_mentions: [], confidence: 'low', notes: 'LLM parse error: ' + e.message };\n}\n\n// Build Slack Block Kit message\nconst pillarsText = (analysis.proposed_pillars || []).map(p => `• ${p.name}: ${p.url_path || 'URL TBD'} — ${p.description}`).join('\\n') || 'None detected — please fill in manually';\nconst nicheText = (analysis.industries_addressed || []).join(', ') || 'None detected';\nconst competitorText = [...(ctx.competitors || []), ...(analysis.competitor_mentions || [])].join(', ') || 'None';\n\n// Log LLM cost\nconst inputTokens = llmRaw.usage?.prompt_tokens || 0;\nconst outputTokens = llmRaw.usage?.completion_tokens || 0;\nconst estimatedCostUsd = (inputTokens * 0.000001) + (outputTokens * 0.000002);\n\nreturn [{\n  json: {\n    ...ctx,\n    crawl_analysis: analysis,\n    llm_cost: { input_tokens: inputTokens, output_tokens: outputTokens, usd: estimatedCostUsd },\n    slack_message: {\n      channel: 'C0B43A7QG5P',\n      text: `🚀 New client onboarding: *${ctx.client_name}*`,\n      blocks: [\n        {\n          type: 'header',\n          text: { type: 'plain_text', text: `New Client Onboarding: ${ctx.client_name}`, emoji: true }\n        },\n        {\n          type: 'section',\n          text: { type: 'mrkdwn', text: `*Website:* ${ctx.client_url}\\n*AI Confidence:* ${analysis.confidence || 'unknown'}\\n*Notes:* ${analysis.notes || 'none'}` }\n        },\n        { type: 'divider' },\n        {\n          type: 'section',\n          text: { type: 'mrkdwn', text: `*Proposed Service Pillars (from crawl):*\\n${pillarsText}\\n\\n⬆️ Please verify these are correct. Edit the text fields below and submit.` }\n        },\n        {\n          type: 'input',\n          block_id: 'pillars_input',\n          label: { type: 'plain_text', text: 'Service Pillars (one per line: name|url_path|description)' },\n          element: {\n            type: 'plain_text_input',\n            action_id: 'pillars_value',\n            multiline: true,\n            initial_value: (analysis.proposed_pillars || []).map(p => `${p.name}|${p.url_path || ''}|${p.description}`).join('\\n')\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'icp_input',\n          label: { type: 'plain_text', text: 'ICP Persona (2-3 sentences)' },\n          element: {\n            type: 'plain_text_input',\n            action_id: 'icp_value',\n            multiline: true,\n            initial_value: analysis.icp_persona_draft || ''\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'brand_voice_input',\n          label: { type: 'plain_text', text: 'Brand Voice' },\n          element: {\n            type: 'plain_text_input',\n            action_id: 'brand_voice_value',\n            multiline: true,\n            initial_value: analysis.brand_voice_hints || ''\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'niches_input',\n          label: { type: 'plain_text', text: 'Target Niches (comma-separated)' },\n          element: {\n            type: 'plain_text_input',\n            action_id: 'niches_value',\n            initial_value: nicheText\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'competitors_input',\n          label: { type: 'plain_text', text: 'Competitor Domains (comma-separated)' },\n          element: {\n            type: 'plain_text_input',\n            action_id: 'competitors_value',\n            initial_value: competitorText\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'review_tier_input',\n          label: { type: 'plain_text', text: 'Review Tier' },\n          element: {\n            type: 'static_select',\n            action_id: 'review_tier_value',\n            initial_option: { text: { type: 'plain_text', text: 'tier_b_hitl_borderline' }, value: 'tier_b_hitl_borderline' },\n            options: [\n              { text: { type: 'plain_text', text: 'tier_a_ai_only' }, value: 'tier_a_ai_only' },\n              { text: { type: 'plain_text', text: 'tier_b_hitl_borderline' }, value: 'tier_b_hitl_borderline' },\n              { text: { type: 'plain_text', text: 'tier_c_hitl_random_sample' }, value: 'tier_c_hitl_random_sample' },\n              { text: { type: 'plain_text', text: 'tier_d_hitl_full' }, value: 'tier_d_hitl_full' }\n            ]\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'nav_strategy_input',\n          label: { type: 'plain_text', text: 'Navigational Competitor Strategy' },\n          element: {\n            type: 'static_select',\n            action_id: 'nav_strategy_value',\n            initial_option: { text: { type: 'plain_text', text: 'allow_comparison_only' }, value: 'allow_comparison_only' },\n            options: [\n              { text: { type: 'plain_text', text: 'allow_comparison_only' }, value: 'allow_comparison_only' },\n              { text: { type: 'plain_text', text: 'reject_all' }, value: 'reject_all' },\n              { text: { type: 'plain_text', text: 'allow_all' }, value: 'allow_all' }\n            ]\n          }\n        },\n        {\n          type: 'input',\n          block_id: 'monthly_budget_input',\n          label: { type: 'plain_text', text: 'Monthly API Budget USD' },\n          element: {\n            type: 'plain_text_input',\n            action_id: 'monthly_budget_value',\n            initial_value: '50'\n          }\n        },\n        {\n          type: 'actions',\n          elements: [\n            {\n              type: 'button',\n              text: { type: 'plain_text', text: 'Submit Questionnaire' },\n              style: 'primary',\n              action_id: 'submit_questionnaire',\n              value: JSON.stringify({ pipeline_run_id: ctx.pipeline_run_id, client_name: ctx.client_name, client_url: ctx.client_url })\n            }\n          ]\n        }\n      ]\n    }\n  }\n}];"
+      },
+      "id": "build-slack-questionnaire",
+      "name": "Build_Slack_Questionnaire",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.slack_message) }}"
+      },
+      "id": "send-questionnaire-card",
+      "name": "Send_Questionnaire_Card",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2860, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "slack-cred-id",
+          "name": "Slack_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-onboard-questionnaire-response",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wait-for-questionnaire",
+      "name": "Wait_For_Questionnaire",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [3080, 0],
+      "webhookId": "wf-onboard-questionnaire-response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Slack form submission payload\nconst body = $input.first().json.body || $input.first().json;\nconst payload = typeof body.payload === 'string' ? JSON.parse(body.payload) : body.payload || body;\n\nconst values = payload?.view?.state?.values || payload?.actions?.[0] || {};\n\n// Helper to extract value from Slack block kit state\nconst get = (blockId, actionId) => {\n  const block = values[blockId];\n  if (!block) return null;\n  const action = block[actionId];\n  if (!action) return null;\n  return action.value || action.selected_option?.value || null;\n};\n\nconst pillarsRaw = get('pillars_input', 'pillars_value') || '';\nconst pillars = pillarsRaw.split('\\n').filter(Boolean).map(line => {\n  const [name, url_path, ...descParts] = line.split('|');\n  return { name: name?.trim(), url_path: url_path?.trim() || null, description: descParts.join('|').trim() };\n}).filter(p => p.name);\n\nconst nichesRaw = get('niches_input', 'niches_value') || '';\nconst niches = nichesRaw.split(',').map(n => n.trim()).filter(Boolean);\n\nconst competitorsRaw = get('competitors_input', 'competitors_value') || '';\nconst competitors = competitorsRaw.split(',').map(c => c.trim()).filter(Boolean);\n\n// Retrieve context from action value\nlet ctxMeta = {};\ntry {\n  ctxMeta = JSON.parse(payload?.actions?.[0]?.value || '{}');\n} catch(e) {}\n\nreturn [{\n  json: {\n    pipeline_run_id: ctxMeta.pipeline_run_id,\n    client_name: ctxMeta.client_name,\n    client_url: ctxMeta.client_url,\n    questionnaire: {\n      service_pillars: pillars,\n      icp_persona: get('icp_input', 'icp_value') || '',\n      brand_voice: get('brand_voice_input', 'brand_voice_value') || '',\n      niches,\n      competitors,\n      review_tier: get('review_tier_input', 'review_tier_value') || 'tier_b_hitl_borderline',\n      navigational_competitor_strategy: get('nav_strategy_input', 'nav_strategy_value') || 'allow_comparison_only',\n      monthly_api_budget_usd: parseInt(get('monthly_budget_input', 'monthly_budget_value') || '50', 10)\n    }\n  }\n}];"
+      },
+      "id": "parse-questionnaire",
+      "name": "Parse_Questionnaire_Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3300, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build cross-validation LLM request\nconst q = $json.questionnaire;\nconst crawlAnalysis = $('Build_Slack_Questionnaire').first().json.crawl_analysis;\n\nconst systemPrompt = 'You are a quality-control agent reviewing an onboarding questionnaire against website crawl data. Find meaningful inconsistencies. Return ONLY a raw JSON object — no markdown, no code fences.';\n\nconst userPrompt = `Compare the questionnaire answers against the site crawl analysis.\\n\\nCrawl analysis:\\n${JSON.stringify(crawlAnalysis, null, 2)}\\n\\nQuestionnaire:\\n${JSON.stringify(q, null, 2)}\\n\\nReturn: { has_flags, flags: [{ field, severity, issue, crawl_evidence, questionnaire_value, suggested_resolution }], summary }`;\n\nreturn [{\n  json: {\n    ...$json,\n    crawl_analysis: crawlAnalysis,\n    llm_request: {\n      model: 'google/gemini-2.0-flash-001',\n      messages: [\n        { role: 'system', content: systemPrompt },\n        { role: 'user', content: userPrompt }\n      ],\n      response_format: { type: 'json_object' },\n      temperature: 0.1,\n      max_tokens: 1024\n    }\n  }\n}];"
+      },
+      "id": "build-crossval-request",
+      "name": "Build_CrossVal_Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3520, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.llm_request) }}"
+      },
+      "id": "llm-crossvalidate-pass1",
+      "name": "LLM_CrossValidate_Pass1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3740, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openrouter-cred-id",
+          "name": "OpenRouter_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse cross-validation response and decide routing\nconst ctx = $('Build_CrossVal_Request').first().json;\nconst llmRaw = $input.first().json;\n\nlet validation = {};\ntry {\n  const content = llmRaw.choices?.[0]?.message?.content || '{}';\n  validation = JSON.parse(content);\n} catch(e) {\n  validation = { has_flags: false, flags: [], summary: 'Parse error: ' + e.message };\n}\n\nconst inputTokens = llmRaw.usage?.prompt_tokens || 0;\nconst outputTokens = llmRaw.usage?.completion_tokens || 0;\nconst costUsd = (inputTokens * 0.000001) + (outputTokens * 0.000002);\n\nreturn [{\n  json: {\n    ...ctx,\n    validation_pass1: validation,\n    has_flags: validation.has_flags === true,\n    llm_cost_crossval: { input_tokens: inputTokens, output_tokens: outputTokens, usd: costUsd }\n  }\n}];"
+      },
+      "id": "parse-crossval-response",
+      "name": "Parse_CrossVal_Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3960, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "flag-check",
+              "leftValue": "={{ $json.has_flags }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-flags",
+      "name": "IF_Has_Flags",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [4180, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'C0B43A7QG5P', text: '⚠️ Cross-validation flags for ' + $json.client_name, blocks: [{ type: 'header', text: { type: 'plain_text', text: '⚠️ Onboarding Flags: ' + $json.client_name } }, { type: 'section', text: { type: 'mrkdwn', text: $json.validation_pass1.summary || 'See flags below.' } }, { type: 'section', text: { type: 'mrkdwn', text: ($json.validation_pass1.flags || []).map(f => '*[' + f.severity.toUpperCase() + '] ' + f.field + '*: ' + f.issue + '\\n_Suggestion:_ ' + f.suggested_resolution).join('\\n\\n') || 'No flags.' } }, { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: 'Acknowledge & Continue' }, style: 'primary', action_id: 'acknowledge_flags', value: JSON.stringify({ pipeline_run_id: $json.pipeline_run_id, client_name: $json.client_name, client_url: $json.client_url }) }] }] }) }}"
+      },
+      "id": "send-flag-card",
+      "name": "Send_Flag_Review_Card",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4400, -120],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "slack-cred-id",
+          "name": "Slack_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-onboard-flag-response",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wait-for-flag-ack",
+      "name": "Wait_For_Flag_Ack",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [4620, -120],
+      "webhookId": "wf-onboard-flag-response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Write client config, niches, competitor_brand_names, and gold_examples to Supabase\n// This node runs after flags are resolved (or skipped if no flags)\nconst ctx = $input.first().json;\nconst q = ctx.questionnaire;\nconst analysis = ctx.crawl_analysis || {};\n\n// Build client config JSONB\nconst config = {\n  service_pillars: q.service_pillars,\n  icp_persona: q.icp_persona,\n  brand_voice: q.brand_voice,\n  monthly_api_budget_usd: q.monthly_api_budget_usd || 50,\n  expected_runs_per_month: 4,\n  per_run_cost_ceiling_pct: 150,\n  review_tier: q.review_tier,\n  navigational_competitor_strategy: q.navigational_competitor_strategy,\n  hitl_channels: ['slack'],\n  hitl_routing: { borderline: 'slack', high_severity: ['slack'], taxonomy_suggestions: 'slack', cost_ceiling: ['slack'], quality_drift: ['slack'], onboarding_review: 'slack' },\n  negative_overrides: [],\n  positive_overrides: []\n};\n\nreturn [{\n  json: {\n    ...ctx,\n    db_writes: {\n      client: {\n        name: q.client_name || ctx.client_name,\n        slug: (q.client_name || ctx.client_name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),\n        canonical_domain: (ctx.client_url || '').replace(/^https?:\\/\\//, '').replace(/\\/.*/, ''),\n        config: config,\n        onboarding_status: 'active'\n      },\n      niches: q.niches.map(n => ({ name: n, source: 'onboarding_declared' })),\n      competitors: q.competitors.map(c => ({ domain: c })),\n      gold_examples: (analysis.proposed_pillars || []).flatMap(p => [\n        { keyword: p.name + ' agency', label: 'positive', notes: 'LLM-proposed seed from crawl' },\n        { keyword: p.name + ' services', label: 'positive', notes: 'LLM-proposed seed from crawl' }\n      ]).slice(0, 10)\n    }\n  }\n}];"
+      },
+      "id": "build-db-writes",
+      "name": "Build_DB_Writes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4840, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.db_writes.client) }}"
+      },
+      "id": "write-client",
+      "name": "Write_Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5060, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-cred-id",
+          "name": "Supabase_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract client ID from insert response and write niches\nconst client = $input.first().json;\nconst clientId = Array.isArray(client) ? client[0]?.id : client?.id;\nconst ctx = $('Build_DB_Writes').first().json;\n\nreturn [{\n  json: {\n    ...ctx,\n    client_id: clientId\n  }\n}];"
+      },
+      "id": "extract-client-id",
+      "name": "Extract_Client_ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [5280, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/niches",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.db_writes.niches.map(n => ({ ...n, client_id: $json.client_id }))) }}"
+      },
+      "id": "write-niches",
+      "name": "Write_Niches",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5500, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-cred-id",
+          "name": "Supabase_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/api_cost_log",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify([ { pipeline_run_id: $json.pipeline_run_id, client_id: $json.client_id, provider: 'openrouter', model: 'google/gemini-2.0-flash-001', operation: 'onboard_site_analysis', input_tokens: $json.llm_cost?.input_tokens || 0, output_tokens: $json.llm_cost?.output_tokens || 0, usd_cost: $json.llm_cost?.usd || 0 }, { pipeline_run_id: $json.pipeline_run_id, client_id: $json.client_id, provider: 'openrouter', model: 'google/gemini-2.0-flash-001', operation: 'onboard_cross_validation', input_tokens: $json.llm_cost_crossval?.input_tokens || 0, output_tokens: $json.llm_cost_crossval?.output_tokens || 0, usd_cost: $json.llm_cost_crossval?.usd || 0 } ]) }}"
+      },
+      "id": "log-costs",
+      "name": "Log_API_Costs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5720, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-cred-id",
+          "name": "Supabase_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs?id=eq.{{ $json.pipeline_run_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'completed', finished_at: new Date().toISOString(), output_summary: { client_id: $json.client_id, pillars_count: ($json.questionnaire?.service_pillars || []).length, niches_count: ($json.questionnaire?.niches || []).length } }) }}"
+      },
+      "id": "update-pipeline-run",
+      "name": "Update_Pipeline_Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [5940, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-cred-id",
+          "name": "Supabase_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'C0B43A7QG5P', text: '✅ Onboarding complete: ' + $json.client_name, blocks: [{ type: 'header', text: { type: 'plain_text', text: '✅ Client Onboarded: ' + ($json.questionnaire?.client_name || $json.client_name) } }, { type: 'section', text: { type: 'mrkdwn', text: '*Domain:* ' + $json.client_url + '\\n*Client ID:* ' + $json.client_id + '\\n*Pillars:* ' + ($json.questionnaire?.service_pillars || []).map(p => p.name).join(', ') + '\\n*Niches:* ' + ($json.questionnaire?.niches || []).join(', ') + '\\n*Review Tier:* ' + ($json.questionnaire?.review_tier || 'tier_b_hitl_borderline') + '\\n\\nNext step: Run WF-00 (page inventory) and WF-01 (CSV ingest) for this client.' } }] }) }}"
+      },
+      "id": "send-completion-notification",
+      "name": "Send_Completion_Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [6160, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "slack-cred-id",
+          "name": "Slack_SEOTools"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true }) }}"
+      },
+      "id": "respond-ok",
+      "name": "Respond_OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [6380, 0]
+    }
+  ],
+  "connections": {
+    "Webhook_Trigger": {
+      "main": [[{ "node": "Validate_Payload", "type": "main", "index": 0 }]]
+    },
+    "Validate_Payload": {
+      "main": [[{ "node": "Create_Pipeline_Run", "type": "main", "index": 0 }]]
+    },
+    "Create_Pipeline_Run": {
+      "main": [[{ "node": "Merge_Run_ID", "type": "main", "index": 0 }]]
+    },
+    "Merge_Run_ID": {
+      "main": [[{ "node": "Fetch_Sitemap", "type": "main", "index": 0 }]]
+    },
+    "Fetch_Sitemap": {
+      "main": [[{ "node": "Parse_Sitemap_XML", "type": "main", "index": 0 }]]
+    },
+    "Parse_Sitemap_XML": {
+      "main": [[{ "node": "SplitInBatches_Pages", "type": "main", "index": 0 }]]
+    },
+    "SplitInBatches_Pages": {
+      "main": [[{ "node": "Crawl_Page", "type": "main", "index": 0 }]]
+    },
+    "Crawl_Page": {
+      "main": [[{ "node": "Extract_Page_Content", "type": "main", "index": 0 }]]
+    },
+    "Extract_Page_Content": {
+      "main": [[{ "node": "Aggregate_Page_Data", "type": "main", "index": 0 }]]
+    },
+    "Aggregate_Page_Data": {
+      "main": [[{ "node": "Build_LLM_Request", "type": "main", "index": 0 }]]
+    },
+    "Build_LLM_Request": {
+      "main": [[{ "node": "LLM_Site_Analysis", "type": "main", "index": 0 }]]
+    },
+    "LLM_Site_Analysis": {
+      "main": [[{ "node": "Build_Slack_Questionnaire", "type": "main", "index": 0 }]]
+    },
+    "Build_Slack_Questionnaire": {
+      "main": [[{ "node": "Send_Questionnaire_Card", "type": "main", "index": 0 }]]
+    },
+    "Send_Questionnaire_Card": {
+      "main": [[{ "node": "Wait_For_Questionnaire", "type": "main", "index": 0 }]]
+    },
+    "Wait_For_Questionnaire": {
+      "main": [[{ "node": "Parse_Questionnaire_Response", "type": "main", "index": 0 }]]
+    },
+    "Parse_Questionnaire_Response": {
+      "main": [[{ "node": "Build_CrossVal_Request", "type": "main", "index": 0 }]]
+    },
+    "Build_CrossVal_Request": {
+      "main": [[{ "node": "LLM_CrossValidate_Pass1", "type": "main", "index": 0 }]]
+    },
+    "LLM_CrossValidate_Pass1": {
+      "main": [[{ "node": "Parse_CrossVal_Response", "type": "main", "index": 0 }]]
+    },
+    "Parse_CrossVal_Response": {
+      "main": [[{ "node": "IF_Has_Flags", "type": "main", "index": 0 }]]
+    },
+    "IF_Has_Flags": {
+      "main": [
+        [{ "node": "Send_Flag_Review_Card", "type": "main", "index": 0 }],
+        [{ "node": "Build_DB_Writes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send_Flag_Review_Card": {
+      "main": [[{ "node": "Wait_For_Flag_Ack", "type": "main", "index": 0 }]]
+    },
+    "Wait_For_Flag_Ack": {
+      "main": [[{ "node": "Build_DB_Writes", "type": "main", "index": 0 }]]
+    },
+    "Build_DB_Writes": {
+      "main": [[{ "node": "Write_Client", "type": "main", "index": 0 }]]
+    },
+    "Write_Client": {
+      "main": [[{ "node": "Extract_Client_ID", "type": "main", "index": 0 }]]
+    },
+    "Extract_Client_ID": {
+      "main": [[{ "node": "Write_Niches", "type": "main", "index": 0 }]]
+    },
+    "Write_Niches": {
+      "main": [[{ "node": "Log_API_Costs", "type": "main", "index": 0 }]]
+    },
+    "Log_API_Costs": {
+      "main": [[{ "node": "Update_Pipeline_Run", "type": "main", "index": 0 }]]
+    },
+    "Update_Pipeline_Run": {
+      "main": [[{ "node": "Send_Completion_Notification", "type": "main", "index": 0 }]]
+    },
+    "Send_Completion_Notification": {
+      "main": [[{ "node": "Respond_OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 2,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

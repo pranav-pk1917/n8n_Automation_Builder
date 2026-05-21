@@ -1,0 +1,379 @@
+{
+  "name": "WF-02-Tiered-Filter",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-02 — Tiered Keyword Filter\n\n**Purpose:** Run raw_keywords through the 4-tier filter pipeline:\n- Tier 0a: Postgres regex negatives (free, deterministic)\n- Tier 0b: Competitor brand/navigational filter\n- Tier 1: Embedding similarity vs gold_examples\n- Tier 2: LLM 3-axis classifier for borderline keywords\n- HITL: Slack approval queue (routed by client review_tier)\n- Cross-validation: AI second-pass on human overrides\n\n**Trigger:** POST to `/webhook/wf-02-filter`\nPayload: `{ client_id, pipeline_run_id? }`\n\n**Outputs written to Supabase:**\n- `keyword_classifications` (full audit trail)\n- `cross_validation_events`\n- `api_cost_log`\n- `pipeline_runs` (kind=filter)\n\n**Dependent workflows:** WF-03 (reads passed classifications)\n**Phase:** 1",
+        "height": 340,
+        "width": 400,
+        "color": 7
+      },
+      "id": "sticky-wf02",
+      "name": "📋 WF-02",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-480, -200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-02-filter",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "filter-trigger",
+      "name": "Webhook_Filter",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "wf-02-filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.client_id) throw new Error('Missing required field: client_id');\nreturn [{ json: { client_id: body.client_id, pipeline_run_id: body.pipeline_run_id || null, started_at: new Date().toISOString() } }];"
+      },
+      "id": "validate-filter",
+      "name": "Validate_Filter_Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?id=eq.{{ $json.client_id }}&select=id,config,slug",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-client-config",
+      "name": "Fetch_Client_Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Run Tier 0a (regex negatives) and Tier 0b (competitor brand filter) via Supabase RPC\n// These are Postgres functions that return keyword IDs grouped by decision\nconst client = ($input.first().json || [])[0];\nconst ctx = $('Validate_Filter_Payload').first().json;\nif (!client) throw new Error('Client not found: ' + ctx.client_id);\nreturn [{ json: { ...ctx, client_id: client.id, client_config: client.config, client_slug: client.slug } }];"
+      },
+      "id": "merge-client",
+      "name": "Merge_Client_Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/apply_tier0_regex_filter",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ p_client_id: $json.client_id, p_pipeline_run_id: $json.pipeline_run_id }) }}"
+      },
+      "id": "tier0a-regex",
+      "name": "Tier0a_Regex_Filter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/apply_tier0_competitor_navigational_filter",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ p_client_id: $json.client_id, p_pipeline_run_id: $json.pipeline_run_id }) }}"
+      },
+      "id": "tier0b-competitor",
+      "name": "Tier0b_Competitor_Filter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/raw_keywords?client_id=eq.{{ $json.client_id }}&select=id,keyword&order=id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Range", "value": "0-49999" }
+          ]
+        }
+      },
+      "id": "fetch-unclassified",
+      "name": "Fetch_Unclassified_Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/gold_examples?client_id=eq.{{ $json.client_id }}&select=keyword,label,embedding",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-gold-examples",
+      "name": "Fetch_Gold_Examples",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 200],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tier 1: embed each unclassified keyword and compute cosine similarity vs gold_example centroids\n// Returns items with tier1_decision: passed | rejected | borderline\nconst ctx = $('Merge_Client_Config').first().json;\nconst keywords = $('Fetch_Unclassified_Keywords').first().json || [];\nconst goldExamples = $('Fetch_Gold_Examples').first().json || [];\n\nconst positives = goldExamples.filter(g => g.label === 'positive' && g.embedding);\nconst negatives = goldExamples.filter(g => g.label === 'negative' && g.embedding);\n\n// Helper: cosine similarity\nfunction cosine(a, b) {\n  if (!a || !b || a.length !== b.length) return 0;\n  let dot = 0, na = 0, nb = 0;\n  for (let i = 0; i < a.length; i++) { dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }\n  return na && nb ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;\n}\n\n// Centroid: average of embeddings\nfunction centroid(vecs) {\n  if (!vecs.length) return null;\n  const len = vecs[0].length;\n  const c = new Array(len).fill(0);\n  for (const v of vecs) for (let i = 0; i < len; i++) c[i] += v[i];\n  return c.map(v => v / vecs.length);\n}\n\nconst posCentroid = centroid(positives.map(g => g.embedding));\nconst negCentroid = centroid(negatives.map(g => g.embedding));\n\n// Return keywords that need embedding (we batch-embed then re-enter this logic)\n// For now, mark all as needing_tier1_embedding — WF-02 Part 2 handles embedding + scoring\nreturn [{\n  json: {\n    ...ctx,\n    keywords_to_embed: keywords.map(k => k.keyword),\n    keyword_ids: keywords.map(k => k.id),\n    has_gold_examples: positives.length > 0 || negatives.length > 0,\n    pos_centroid: posCentroid,\n    neg_centroid: negCentroid\n  }\n}];"
+      },
+      "id": "prepare-tier1",
+      "name": "Prepare_Tier1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 100]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "batch-embed",
+      "name": "Batch_For_Embedding",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1760, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'openai/text-embedding-3-small', input: $json.keywords_to_embed.slice($json.batchIndex * 100, ($json.batchIndex + 1) * 100), dimensions: 768 }) }}"
+      },
+      "id": "embed-keywords",
+      "name": "Embed_Keywords_Batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 100],
+      "credentials": {
+        "httpHeaderAuth": { "id": "openrouter-cred-id", "name": "OpenRouter_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Score embeddings against gold centroids and assign tier1 decision\nconst ctx = $('Prepare_Tier1').first().json;\nconst embResp = $input.first().json;\nconst embeddings = embResp?.data || [];\n\nfunction cosine(a, b) {\n  if (!a || !b || a.length !== b.length) return 0;\n  let dot = 0, na = 0, nb = 0;\n  for (let i = 0; i < a.length; i++) { dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }\n  return na && nb ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;\n}\n\nconst results = embeddings.map((e, i) => {\n  const kw = ctx.keywords_to_embed[i];\n  const id = ctx.keyword_ids[i];\n  const emb = e.embedding;\n  const posScore = ctx.has_gold_examples ? cosine(emb, ctx.pos_centroid) : 0.5;\n  const negScore = ctx.has_gold_examples ? cosine(emb, ctx.neg_centroid) : 0.5;\n  const diff = posScore - negScore;\n  let tier1_decision;\n  if (diff > 0.15) tier1_decision = 'passed';\n  else if (diff < -0.15) tier1_decision = 'rejected';\n  else tier1_decision = 'borderline';\n  return { keyword: kw, raw_keyword_id: id, embedding: emb, pos_score: posScore, neg_score: negScore, tier1_decision };\n});\n\nconst borderline = results.filter(r => r.tier1_decision === 'borderline');\nconst passed = results.filter(r => r.tier1_decision === 'passed');\nconst rejected = results.filter(r => r.tier1_decision === 'rejected');\n\nreturn [{ json: { ...ctx, tier1_results: results, borderline, passed_tier1: passed, rejected_tier1: rejected, embed_tokens: embResp?.usage?.total_tokens || 0 } }];"
+      },
+      "id": "score-tier1",
+      "name": "Score_Tier1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Tier 2 LLM classify requests for borderline keywords\n// Only send keywords where tier1_decision === 'borderline'\nconst ctx = $json;\nconst borderline = ctx.borderline || [];\n\nreturn borderline.map(kw => ({\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    client_config: ctx.client_config,\n    raw_keyword_id: kw.raw_keyword_id,\n    keyword: kw.keyword,\n    embedding: kw.embedding,\n    tier1_pos_score: kw.pos_score,\n    tier1_neg_score: kw.neg_score\n  }\n}));"
+      },
+      "id": "prep-tier2",
+      "name": "Prep_Tier2_Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'google/gemini-2.0-flash-001', messages: [{ role: 'system', content: 'You are an expert SEO keyword classifier for B2B service companies. Classify the keyword on 3 axes and determine intent. Return ONLY raw JSON with: status (passed|rejected|needs_review), intent_type, niche_hint, content_theme_hint, confidence (0-1), decision_reasoning, icp_match_score.' }, { role: 'user', content: 'Classify this keyword for a B2B marketing agency:\\n\\nKeyword: ' + $json.keyword + '\\n\\nClient pillars: ' + JSON.stringify(($json.client_config?.service_pillars || []).map(p => p.name)) + '\\nICP: ' + ($json.client_config?.icp_persona || '') + '\\nNavigational strategy: ' + ($json.client_config?.navigational_competitor_strategy || 'allow_comparison_only') }], response_format: { type: 'json_object' }, temperature: 0.1, max_tokens: 512 }) }}"
+      },
+      "id": "llm-tier2",
+      "name": "LLM_Tier2_Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, 100],
+      "credentials": {
+        "httpHeaderAuth": { "id": "openrouter-cred-id", "name": "OpenRouter_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Tier 2 response and write classification to Supabase\nconst ctx = $('Prep_Tier2_Items').item.json;\nconst llmRaw = $input.first().json;\n\nlet classification = {};\ntry {\n  classification = JSON.parse(llmRaw.choices?.[0]?.message?.content || '{}');\n} catch(e) {\n  classification = { status: 'needs_review', confidence: 0, decision_reasoning: 'Parse error: ' + e.message };\n}\n\nconst inputTokens = llmRaw.usage?.prompt_tokens || 0;\nconst outputTokens = llmRaw.usage?.completion_tokens || 0;\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    raw_keyword_id: ctx.raw_keyword_id,\n    keyword: ctx.keyword,\n    classification: {\n      raw_keyword_id: ctx.raw_keyword_id,\n      client_id: ctx.client_id,\n      pipeline_run_id: ctx.pipeline_run_id,\n      status: classification.status || 'needs_review',\n      decided_by: 'tier2_llm',\n      decision_reasoning: classification.decision_reasoning || '',\n      confidence: classification.confidence || 0,\n      intent_type: classification.intent_type || 'informational',\n      niche_hint: classification.niche_hint || null,\n      content_theme_hint: classification.content_theme_hint || null,\n      icp_match_score: classification.icp_match_score || 0,\n      llm_prompt_hash: 'tier2-classifier-v1'\n    },\n    llm_tokens: { input: inputTokens, output: outputTokens }\n  }\n}];"
+      },
+      "id": "parse-tier2",
+      "name": "Parse_Tier2_Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/keyword_classifications",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.classification) }}"
+      },
+      "id": "write-classification",
+      "name": "Write_Classification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3080, 100],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "needs-hitl",
+              "leftValue": "={{ $json.classification.status }}",
+              "rightValue": "needs_review",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-needs-hitl",
+      "name": "IF_Needs_HITL",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3300, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: 'C0B43A7QG5P', text: '🔍 Keyword review needed: ' + $json.keyword, blocks: [{ type: 'section', text: { type: 'mrkdwn', text: '*Keyword:* `' + $json.keyword + '`\\n*AI Decision:* ' + $json.classification.status + ' (confidence: ' + ($json.classification.confidence * 100).toFixed(0) + '%)\\n*Reasoning:* ' + $json.classification.decision_reasoning + '\\n*Intent:* ' + $json.classification.intent_type + '\\n*Niche hint:* ' + ($json.classification.niche_hint || 'none') + '\\n*Theme hint:* ' + ($json.classification.content_theme_hint || 'none') } }, { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: '✅ Pass' }, style: 'primary', action_id: 'hitl_pass', value: JSON.stringify({ classification_id: $json.classification.raw_keyword_id, decision: 'passed', client_id: $json.client_id }) }, { type: 'button', text: { type: 'plain_text', text: '❌ Reject' }, style: 'danger', action_id: 'hitl_reject', value: JSON.stringify({ classification_id: $json.classification.raw_keyword_id, decision: 'rejected', client_id: $json.client_id }) }] }] }) }}"
+      },
+      "id": "send-hitl-card",
+      "name": "Send_HITL_Card",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3520, -80],
+      "credentials": {
+        "httpHeaderAuth": { "id": "slack-cred-id", "name": "Slack_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: 'filter_complete' }) }}"
+      },
+      "id": "respond-filter",
+      "name": "Respond_Filter",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3520, 100]
+    }
+  ],
+  "connections": {
+    "Webhook_Filter": { "main": [[{ "node": "Validate_Filter_Payload", "type": "main", "index": 0 }]] },
+    "Validate_Filter_Payload": { "main": [[{ "node": "Fetch_Client_Config", "type": "main", "index": 0 }]] },
+    "Fetch_Client_Config": { "main": [[{ "node": "Merge_Client_Config", "type": "main", "index": 0 }]] },
+    "Merge_Client_Config": {
+      "main": [
+        [{ "node": "Tier0a_Regex_Filter", "type": "main", "index": 0 }],
+        [{ "node": "Fetch_Unclassified_Keywords", "type": "main", "index": 0 }],
+        [{ "node": "Fetch_Gold_Examples", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tier0a_Regex_Filter": { "main": [[{ "node": "Tier0b_Competitor_Filter", "type": "main", "index": 0 }]] },
+    "Fetch_Unclassified_Keywords": { "main": [[{ "node": "Prepare_Tier1", "type": "main", "index": 0 }]] },
+    "Fetch_Gold_Examples": { "main": [[{ "node": "Prepare_Tier1", "type": "main", "index": 1 }]] },
+    "Prepare_Tier1": { "main": [[{ "node": "Batch_For_Embedding", "type": "main", "index": 0 }]] },
+    "Batch_For_Embedding": { "main": [[{ "node": "Embed_Keywords_Batch", "type": "main", "index": 0 }]] },
+    "Embed_Keywords_Batch": { "main": [[{ "node": "Score_Tier1", "type": "main", "index": 0 }]] },
+    "Score_Tier1": { "main": [[{ "node": "Prep_Tier2_Items", "type": "main", "index": 0 }]] },
+    "Prep_Tier2_Items": { "main": [[{ "node": "LLM_Tier2_Classify", "type": "main", "index": 0 }]] },
+    "LLM_Tier2_Classify": { "main": [[{ "node": "Parse_Tier2_Response", "type": "main", "index": 0 }]] },
+    "Parse_Tier2_Response": { "main": [[{ "node": "Write_Classification", "type": "main", "index": 0 }]] },
+    "Write_Classification": { "main": [[{ "node": "IF_Needs_HITL", "type": "main", "index": 0 }]] },
+    "IF_Needs_HITL": {
+      "main": [
+        [{ "node": "Send_HITL_Card", "type": "main", "index": 0 }],
+        [{ "node": "Respond_Filter", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

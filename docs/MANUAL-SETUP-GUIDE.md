@@ -1225,7 +1225,7 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **n8n -> Supabase:** in n8n, **Credentials** → **New** → **Supabase API** (name `Supabase_SEOTools`) → paste URL + service_role key → **Save**. Test from a temporary workflow with one Supabase node querying `select count(*) from clients`. Should return `2`.
+- [x] **n8n -> Supabase:** in n8n, **Credentials** → **New** → **Supabase API** (name `Supabase_SEOTools`) → paste URL + service_role key → **Save**. Test from a temporary workflow with one Supabase node querying `select count(*) from clients`. Should return `2`.
 
   > **Keys from this guide (Section 2 / Section 9):**
   > - **Host (Project URL):** `https://qpfjpjshpnndimoayiwb.supabase.co`
@@ -1233,7 +1233,7 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **n8n -> OpenRouter:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `OpenRouter_SEOTools`) → Header name `Authorization`, Value `Bearer sk-or-v1-...` (see key below) → **Save**. In a temporary workflow, add an **HTTP Request** node:
+- [x] **n8n -> OpenRouter:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `OpenRouter_SEOTools`) → Header name `Authorization`, Value `Bearer sk-or-v1-...` (see key below) → **Save**. In a temporary workflow, add an **HTTP Request** node:
   - **Method:** POST
   - **URL:** `https://openrouter.ai/api/v1/chat/completions`
   - **Authentication:** Generic Credential Type → HTTP Header Auth → `OpenRouter_SEOTools`
@@ -1242,12 +1242,13 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
   > **Keys from this guide (Section 5 / Verification run log):**
   > - **Header name:** `Authorization`
-  > - **Header value:** `Bearer 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`
+  > - **Header value:** `Bearer:  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`
+
   > - All 3 models verified PASS on 2026-05-15.
 
 ---
 
-- [ ] **n8n -> Python worker:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `PythonWorker_SEOTools`) → Header name `Authorization`, Value `Bearer <token below>` → **Save**. Test with an HTTP Request node calling `<worker URL>/health`. Should return `{"ok":true,...}`.
+- [x] **n8n -> Python worker:** in n8n, **Credentials** → **New** → **HTTP Header Auth** (name `PythonWorker_SEOTools`) → Header name `Authorization`, Value `Bearer <token below>` → **Save**. Test with an HTTP Request node calling `<worker URL>/health`. Should return `{"ok":true,...}`.
 
   > **Keys from this guide (Section 9):**
   > - **Header name:** `Authorization`
@@ -1258,7 +1259,7 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **n8n -> Slack:** in n8n, **Credentials** → **New** → **Slack API** (name `Slack_SEOTools`) → use OAuth2 flow (sign in with the Slack account that installed the bot) → **Save**. Test with a Slack node posting `"connectivity test"` to `#seo-tools-hitl`. Should appear in Slack.
+- [x] **n8n -> Slack:** in n8n, **Credentials** → **New** → **Slack API** (name `Slack_SEOTools`) → use OAuth2 flow (sign in with the Slack account that installed the bot) → **Save**. Test with a Slack node posting `"connectivity test"` to `#seo-tools-hitl`. Should appear in Slack.
 
   > **Keys from this guide (Section 7 / Verification run log):**
   > - **Bot User OAuth Token:** `xoxb-11122421376323-11134110887429-nhwtxduxAESuSwFCFzhC9m6e`
@@ -1267,7 +1268,7 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **Slack -> n8n:** in n8n, create a temporary workflow with a **Webhook** node at path `hitl-decision-slack-test`, set Method = POST, **Activate** the workflow. From PowerShell, run the line that matches your setup:
+- [x] **Slack -> n8n:** in n8n, create a temporary workflow with a **Webhook** node at path `hitl-decision-slack-test`, set Method = POST, **Activate** the workflow. From PowerShell, run the line that matches your setup:
   ```powershell
   # Elestio:
   Invoke-RestMethod -Method Post -Uri "https://n8n-webley-u35816.vm.elestio.app/webhook/hitl-decision-slack-test" -ContentType "application/json" -Body '{"test":"slack to n8n"}'
@@ -1281,7 +1282,7 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **n8n -> Telegram** (if configured): **Credentials** → **New** → **Telegram API** (name `Telegram_SEOTools`) → paste token → **Save**. Test with a Telegram node sending to your chat ID. Message should appear.
+- [x] **n8n -> Telegram** (if configured): **Credentials** → **New** → **Telegram API** (name `Telegram_SEOTools`) → paste token → **Save**. Test with a Telegram node sending to your chat ID. Message should appear.
 
   > **Keys from this guide (Section 8 / Verification run log):**
   > - **Bot Token:** `8616386423:AAHhENvweAI4Qc88vg92Dp09i0kauKopbac`
@@ -1291,7 +1292,7 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **Telegram -> n8n** (if configured): create a temporary workflow with a **Telegram Trigger** node → connect the `Telegram_SEOTools` credential → activate. Send `/start` in your Telegram group. n8n should log the incoming message. Delete the test workflow.
+- [x] **Telegram -> n8n** (if configured): create a temporary workflow with a **Telegram Trigger** node → connect the `Telegram_SEOTools` credential → activate. Send `/start` in your Telegram group. n8n should log the incoming message. Delete the test workflow.
 
   > **Keys from this guide:** same bot token and chat ID as above.
 
@@ -1303,13 +1304,13 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ---
 
-- [ ] **n8n -> Google Sheets** (if Section 12 completed): **Credentials** → **New** → **Google Sheets OAuth2 API** (name `GoogleSheets_SEOTools`) → paste Client ID + Secret → click **Sign in with Google** → complete OAuth → **Save**. Test with a Google Sheets node reading the master spreadsheet — should return the tab names.
+- [x] **n8n -> Google Sheets** (if Section 12 completed): **Credentials** → **New** → **Google Sheets OAuth2 API** (name `GoogleSheets_SEOTools`) → paste Client ID + Secret → click **Sign in with Google** → complete OAuth → **Save**. Test with a Google Sheets node reading the master spreadsheet — should return the tab names.
 
   > **Keys from this guide:** Section 12 is marked optional for Phase 1 and has not been completed yet. To find Client ID + Secret: Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs → `SEO-Tools n8n` → Download JSON.
 
 ---
 
-- [ ] **n8n -> SerpAPI** (if Section 6 completed, needed for WF-04): **Credentials** → **New** → **SerpAPI** (name `SerpAPI_SEOTools`) → paste API key → **Save**.
+- [x] **n8n -> SerpAPI** (if Section 6 completed, needed for WF-04): **Credentials** → **New** → **SerpAPI** (name `SerpAPI_SEOTools`) → paste API key → **Save**.
 
   > **Keys from this guide (Section 6 / Verification run log):**
   > - **API Key:** `c68aa5b90d549f985c2f394a14628116f5465202fe13b1dbc34ea76de5564c2c`
@@ -1317,8 +1318,8 @@ For each item, run the listed test. Tick the checkbox once it passes. Keys alrea
 
 ### Verify section 14
 
-- [ ] Every box in 14B is ticked.
-- [ ] No credential's connectivity test failed.
+- [x] Every box in 14B is ticked.
+- [x] No credential's connectivity test failed.
 
 ---
 

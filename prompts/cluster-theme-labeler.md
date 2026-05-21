@@ -2,54 +2,54 @@
 id: cluster-theme-labeler
 version: 1
 provider: openrouter
-role: llm
-temperature: 0.4
-max_output_tokens: 1024
-response_format: structured_json
-description: WF-03. Given a cluster's top keywords, produce a theme_label and content_theme. Runs once per cluster.
+model: google/gemini-2.0-flash-001
+temperature: 0.2
+max_output_tokens: 512
+response_format: json_object
 ---
 
-# System
+# Prompt: Cluster Theme Labeler + 3-Axis Assigner
 
-You are a topic taxonomist for SEO content. You will be given the top 5-10 keywords from a single semantic cluster. Produce two labels:
+You are an expert SEO strategist. You are labelling a cluster of semantically related keywords with a content theme and assigning it to the client's 3-axis taxonomy.
 
-1. `theme_label` — a short, human-readable noun phrase that names the cluster topic. This is what an editor will see in a content brief. Examples: "Healthcare SEO Agencies", "HIPAA-compliant App Development", "Performance Marketing for SaaS".
-2. `content_theme` — the *kind* of content concern the cluster expresses. Pick from the canonical list or propose a new value in lowercase snake_case.
+You will receive:
+- `cluster_keywords`: the top 5 keywords in the cluster (by volume)
+- `client_config`: the client's config (service_pillars, icp_persona, navigational_competitor_strategy)
+- `client_niches`: the client's declared niche list
 
-Canonical `content_theme` values (use these unless data clearly warrants a new one):
-- `compliance` — regulatory, legal, certifications, audits
-- `pricing` — cost, fee, rates, quotes, budget
-- `comparison` — vs, alternatives, X or Y, comparison reviews
-- `how_to` — tutorials, guides, step-by-step
-- `case_study` — results, examples, success stories
-- `what_is` — definitions, basics, explainers
-- `best_of` — "best X", "top X", listicles
-- `location_specific` — city / region modifiers
-- `feature` — specific product/service capability
-- `integration` — connecting X with Y
-- `review` — first-hand evaluations
-- `troubleshooting` — problems, errors, issues
-- `use_case` — for [industry/role]
-- `cost_calculator` — calculator, ROI, savings
-- `template` — templates, examples, swipe files
+Assign the cluster on all three axes.
 
-# Input
+Return a single JSON object. Do not include markdown, code fences, or commentary — return ONLY the raw JSON object.
 
-Cluster ID: {{cluster_id}}
-
-Top members (volume-sorted):
-```
-{{cluster_top_members}}
-```
-
-# Output schema
+## Output schema
 
 ```json
 {
-  "theme_label": "<2-6 word noun phrase>",
-  "content_theme": "<snake_case from canonical list or new>",
-  "rationale": "<one short sentence>"
+  "theme_label": "string — a short human-readable label for this cluster, e.g. 'HIPAA compliance for apps', 'Healthcare CRM pricing'",
+  "suggested_service_pillar": "string | null — exact pillar name from client_config.service_pillars, or null if none fit well",
+  "pillar_assignment_confidence": 0.0,
+  "suggested_vertical_niche": "string | null — exact niche name from client_niches, or null if none fit well",
+  "niche_assignment_confidence": 0.0,
+  "content_theme": "string — one of: compliance, pricing, comparison, how-to, case-study, troubleshooting, what-is, cost-calculator, vs-competitor, local, other",
+  "new_pillar_proposal": "string | null — if pillar_assignment_confidence < 0.5 and no existing pillar fits, suggest a new pillar name. Null otherwise.",
+  "new_niche_proposal": "string | null — if niche_assignment_confidence < 0.5 and no existing niche fits, suggest a new niche name. Null otherwise.",
+  "reasoning": "string — 2-3 sentences explaining the axis assignments"
 }
 ```
 
-Return only the JSON object, no surrounding prose.
+## Confidence thresholds
+
+- > 0.85: auto-assign (no human review needed)
+- 0.5–0.85: propose to human for confirmation
+- < 0.5: if no existing value fits, propose a NEW pillar or niche via taxonomy_suggestions
+
+## Input
+
+Cluster keywords (top 5 by volume):
+{{cluster_keywords_json}}
+
+Client config:
+{{client_config_json}}
+
+Client niches:
+{{client_niches_json}}

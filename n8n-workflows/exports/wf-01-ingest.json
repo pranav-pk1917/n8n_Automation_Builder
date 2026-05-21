@@ -1,0 +1,269 @@
+{
+  "name": "WF-01-Ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-01 — CSV Keyword Ingest\n\n**Purpose:** Receive a merged SEMrush CSV file path, parse + normalise + dedupe keywords, check graveyard cache, bulk insert clean records into raw_keywords.\n\n**Trigger:** POST to `/webhook/wf-01-ingest`\nPayload: `{ client_id, csv_content (base64 or raw CSV string), pipeline_run_label? }`\n\n**Outputs written to Supabase:**\n- `raw_keywords` (bulk insert, skips dupes and graveyard)\n- `pipeline_runs` (kind=ingest)\n\n**Dependent workflows:** WF-02 (reads raw_keywords)\n**Phase:** 1",
+        "height": 260,
+        "width": 380,
+        "color": 7
+      },
+      "id": "sticky-wf01",
+      "name": "📋 WF-01",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-440, -140]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-01-ingest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ingest-trigger",
+      "name": "Webhook_Ingest",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "wf-01-ingest"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate payload and decode CSV\nconst body = $input.first().json.body || $input.first().json;\nif (!body.client_id) throw new Error('Missing required field: client_id');\nif (!body.csv_content) throw new Error('Missing required field: csv_content');\n\n// Decode base64 if needed\nlet csvText = body.csv_content;\nif (!csvText.includes(',') && !csvText.includes('\\n')) {\n  // Likely base64 encoded\n  csvText = Buffer.from(csvText, 'base64').toString('utf-8');\n}\n\nreturn [{\n  json: {\n    client_id: body.client_id,\n    csv_text: csvText,\n    pipeline_run_label: body.pipeline_run_label || 'manual-ingest-' + new Date().toISOString().slice(0, 10),\n    started_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "validate-ingest",
+      "name": "Validate_Ingest_Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ client_id: $json.client_id, kind: 'ingest', status: 'running', triggered_by: 'webhook', input_summary: { label: $json.pipeline_run_label }, started_at: $json.started_at }) }}"
+      },
+      "id": "create-ingest-run",
+      "name": "Create_Ingest_Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse CSV into keyword records\n// Expected SEMrush columns: Keyword, Search Volume, Keyword Difficulty, CPC, Competition, Number of Results, Intent\nconst ctx = $('Validate_Ingest_Payload').first().json;\nconst run = $input.first().json;\nconst pipeline_run_id = (Array.isArray(run) ? run[0] : run)?.id;\n\nconst lines = ctx.csv_text.split(/\\r?\\n/).filter(Boolean);\nif (lines.length < 2) throw new Error('CSV has no data rows');\n\n// Detect header row and column indices\nconst header = lines[0].toLowerCase().split(',').map(h => h.replace(/\"/g, '').trim());\nconst idx = {\n  keyword: header.findIndex(h => h === 'keyword'),\n  volume: header.findIndex(h => h.includes('search volume') || h === 'volume'),\n  kd: header.findIndex(h => h.includes('keyword difficulty') || h === 'kd'),\n  cpc: header.findIndex(h => h === 'cpc'),\n  competition: header.findIndex(h => h === 'competition'),\n  intent: header.findIndex(h => h.includes('intent'))\n};\nif (idx.keyword === -1) throw new Error('CSV missing Keyword column. Found headers: ' + header.join(', '));\n\nconst parseRow = row => {\n  // Handle quoted CSV fields\n  const fields = [];\n  let field = '';\n  let inQuotes = false;\n  for (const ch of row) {\n    if (ch === '\"') { inQuotes = !inQuotes; continue; }\n    if (ch === ',' && !inQuotes) { fields.push(field.trim()); field = ''; continue; }\n    field += ch;\n  }\n  fields.push(field.trim());\n  return fields;\n};\n\nconst records = lines.slice(1).map(line => {\n  const f = parseRow(line);\n  const keyword = (f[idx.keyword] || '').toLowerCase().trim();\n  if (!keyword) return null;\n  return {\n    client_id: ctx.client_id,\n    pipeline_run_id,\n    keyword,\n    volume: parseInt(f[idx.volume] || '0', 10) || 0,\n    kd: parseFloat(f[idx.kd] || '0') || 0,\n    cpc: parseFloat(f[idx.cpc] || '0') || 0,\n    competition: parseFloat(f[idx.competition] || '0') || 0,\n    intent_semrush: (f[idx.intent] || '').toLowerCase().trim() || null,\n    imported_at: new Date().toISOString()\n  };\n}).filter(Boolean);\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id,\n    total_parsed: records.length,\n    records\n  }\n}];"
+      },
+      "id": "parse-csv",
+      "name": "Parse_CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/keyword_classifications?client_id=eq.{{ $json.client_id }}&status=eq.graveyard&select=raw_keyword_id",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-graveyard",
+      "name": "Fetch_Graveyard_IDs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Also fetch existing raw_keywords for this client to dedupe by keyword text\nconst ctx = $('Parse_CSV').first().json;\nconst graveyardRows = $input.first().json || [];\nconst graveyardIds = new Set((Array.isArray(graveyardRows) ? graveyardRows : []).map(r => r.raw_keyword_id).filter(Boolean));\n\nreturn [{ json: { ...ctx, graveyard_ids: [...graveyardIds] } }];"
+      },
+      "id": "build-graveyard-set",
+      "name": "Build_Graveyard_Set",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/raw_keywords?client_id=eq.{{ $json.client_id }}&select=keyword",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Range", "value": "0-49999" }
+          ]
+        }
+      },
+      "id": "fetch-existing-keywords",
+      "name": "Fetch_Existing_Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dedupe: remove keywords already in raw_keywords or in graveyard\nconst ctx = $('Build_Graveyard_Set').first().json;\nconst existing = $input.first().json || [];\nconst existingSet = new Set((Array.isArray(existing) ? existing : []).map(r => r.keyword?.toLowerCase()));\n\nconst newRecords = ctx.records.filter(r => !existingSet.has(r.keyword));\n\nconst stats = {\n  total_parsed: ctx.total_parsed,\n  duplicate_skipped: ctx.total_parsed - newRecords.length,\n  to_insert: newRecords.length\n};\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    new_records: newRecords,\n    stats\n  }\n}];"
+      },
+      "id": "dedupe-keywords",
+      "name": "Dedupe_Keywords",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split new_records into chunks of 500 for Supabase batch inserts\nconst ctx = $json;\nconst CHUNK = 500;\nconst chunks = [];\nfor (let i = 0; i < ctx.new_records.length; i += CHUNK) {\n  chunks.push(ctx.new_records.slice(i, i + CHUNK));\n}\nif (chunks.length === 0) {\n  return [{ json: { ...ctx, chunk: [], chunk_index: 0, total_chunks: 0 } }];\n}\nreturn chunks.map((chunk, i) => ({\n  json: { client_id: ctx.client_id, pipeline_run_id: ctx.pipeline_run_id, stats: ctx.stats, chunk, chunk_index: i, total_chunks: chunks.length }\n}));"
+      },
+      "id": "chunk-records",
+      "name": "Chunk_Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-records",
+              "leftValue": "={{ $json.chunk.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-has-records",
+      "name": "IF_Has_Records",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1980, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/raw_keywords",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.chunk) }}"
+      },
+      "id": "bulk-insert-keywords",
+      "name": "Bulk_Insert_Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, -120],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs?id=eq.{{ $json.pipeline_run_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'completed', finished_at: new Date().toISOString(), output_summary: $json.stats }) }}"
+      },
+      "id": "complete-ingest-run",
+      "name": "Complete_Ingest_Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, stats: $json.stats }) }}"
+      },
+      "id": "respond-ingest",
+      "name": "Respond_Ingest",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2640, 0]
+    }
+  ],
+  "connections": {
+    "Webhook_Ingest": { "main": [[{ "node": "Validate_Ingest_Payload", "type": "main", "index": 0 }]] },
+    "Validate_Ingest_Payload": { "main": [[{ "node": "Create_Ingest_Run", "type": "main", "index": 0 }]] },
+    "Create_Ingest_Run": { "main": [[{ "node": "Parse_CSV", "type": "main", "index": 0 }]] },
+    "Parse_CSV": { "main": [[{ "node": "Fetch_Graveyard_IDs", "type": "main", "index": 0 }]] },
+    "Fetch_Graveyard_IDs": { "main": [[{ "node": "Build_Graveyard_Set", "type": "main", "index": 0 }]] },
+    "Build_Graveyard_Set": { "main": [[{ "node": "Fetch_Existing_Keywords", "type": "main", "index": 0 }]] },
+    "Fetch_Existing_Keywords": { "main": [[{ "node": "Dedupe_Keywords", "type": "main", "index": 0 }]] },
+    "Dedupe_Keywords": { "main": [[{ "node": "Chunk_Records", "type": "main", "index": 0 }]] },
+    "Chunk_Records": { "main": [[{ "node": "IF_Has_Records", "type": "main", "index": 0 }]] },
+    "IF_Has_Records": {
+      "main": [
+        [{ "node": "Bulk_Insert_Keywords", "type": "main", "index": 0 }],
+        [{ "node": "Complete_Ingest_Run", "type": "main", "index": 0 }]
+      ]
+    },
+    "Bulk_Insert_Keywords": { "main": [[{ "node": "Complete_Ingest_Run", "type": "main", "index": 0 }]] },
+    "Complete_Ingest_Run": { "main": [[{ "node": "Respond_Ingest", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

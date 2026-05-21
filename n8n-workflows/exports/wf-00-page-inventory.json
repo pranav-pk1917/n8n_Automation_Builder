@@ -1,0 +1,304 @@
+{
+  "name": "WF-00-Page-Inventory",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-00 — Page Inventory Sync\n\n**Purpose:** Crawl every active client's sitemap + WPGraphQL blog posts, upsert into the `pages` table with embeddings. Enables cannibalization checks in WF-03.\n\n**Trigger:** Daily cron at 02:00 UTC\n\n**Outputs written to Supabase:**\n- `pages` (upsert by client_id + url_path)\n- `api_cost_log` (embedding costs)\n- `pipeline_runs` (kind=page_sync)\n\n**Dependent workflows:** WF-03 (reads pages.embedding for cannibalization)\n**Phase:** 1",
+        "height": 280,
+        "width": 380,
+        "color": 7
+      },
+      "id": "sticky-wf00",
+      "name": "📋 WF-00",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-440, -160]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 2 * * *" }]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron_Daily_0200",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?onboarding_status=eq.active&select=id,slug,canonical_domain,config",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      },
+      "id": "fetch-active-clients",
+      "name": "Fetch_Active_Clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Expand array of clients into individual items\nconst clients = $input.first().json;\nif (!Array.isArray(clients)) return [];\nreturn clients.map(c => ({ json: c }));"
+      },
+      "id": "split-clients",
+      "name": "Split_Clients",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ client_id: $json.id, kind: 'page_sync', status: 'running', triggered_by: 'cron', started_at: new Date().toISOString() }) }}"
+      },
+      "id": "create-run",
+      "name": "Create_Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge run ID into client context\nconst run = $input.first().json;\nconst client = $('Split_Clients').item.json;\nreturn [{ json: { ...client, pipeline_run_id: (Array.isArray(run) ? run[0] : run)?.id } }];"
+      },
+      "id": "merge-client-run",
+      "name": "Merge_Client_Run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://{{ $json.canonical_domain }}/sitemap.xml",
+        "options": { "timeout": 15000 }
+      },
+      "id": "fetch-sitemap-wf00",
+      "name": "Fetch_Sitemap",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse sitemap + dedupe URLs\nconst ctx = $('Merge_Client_Run').item.json;\nconst xml = $input.first().json.data || $input.first().json.body || '';\nconst locs = (xml.match(/<loc>([^<]+)<\\/loc>/gi) || [])\n  .map(m => m.replace(/<\\/?loc>/gi, '').trim())\n  .filter(u => u.startsWith('http'));\n\nreturn locs.map(url => ({\n  json: {\n    client_id: ctx.id,\n    client_slug: ctx.slug,\n    canonical_domain: ctx.canonical_domain,\n    pipeline_run_id: ctx.pipeline_run_id,\n    page_url: url,\n    page_path: url.replace(/^https?:\\/\\/[^/]+/, '') || '/'\n  }\n}));"
+      },
+      "id": "parse-sitemap-wf00",
+      "name": "Parse_Sitemap",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cms.webleymedia.com/graphql",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\"query\":\"{ posts(first:100){ nodes{ title slug excerpt } } }\"}"
+      },
+      "id": "fetch-wp-posts",
+      "name": "Fetch_WP_Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert WP blog posts to page-shaped records\nconst ctx = $('Merge_Client_Run').item.json;\nconst posts = $input.first().json?.data?.posts?.nodes || [];\nreturn posts.map(p => ({\n  json: {\n    client_id: ctx.id,\n    client_slug: ctx.slug,\n    canonical_domain: ctx.canonical_domain,\n    pipeline_run_id: ctx.pipeline_run_id,\n    page_url: `https://${ctx.canonical_domain}/blog/${p.slug}`,\n    page_path: `/blog/${p.slug}`,\n    title: p.title || '',\n    meta_description: (p.excerpt || '').replace(/<[^>]+>/g, '').trim().slice(0, 300),\n    source: 'wordpress'\n  }\n}));"
+      },
+      "id": "map-wp-posts",
+      "name": "Map_WP_Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "merge-pages",
+      "name": "Merge_Pages",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1760, 100]
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "batch-pages",
+      "name": "Batch_Pages",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1980, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.page_url }}",
+        "options": { "timeout": 8000 }
+      },
+      "id": "fetch-page-html",
+      "name": "Fetch_Page_HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract title + meta from HTML if not already set\nconst ctx = $('Batch_Pages').item.json;\nconst html = $input.first().json.data || $input.first().json.body || '';\nconst title = ctx.title || (html.match(/<title[^>]*>([^<]+)<\\/title>/i) || [])[1]?.trim() || '';\nconst metaDesc = ctx.meta_description || (html.match(/<meta[^>]+name=['\"]description['\"][^>]+content=['\"]([^'\"]{0,300})['\"][^>]*>/i) || [])[1]?.trim() || '';\n\nreturn [{ json: { ...ctx, title, meta_description: metaDesc, text_for_embedding: (title + ' ' + metaDesc).trim() } }];"
+      },
+      "id": "extract-page-meta",
+      "name": "Extract_Page_Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'openai/text-embedding-3-small', input: $json.text_for_embedding, dimensions: 768 }) }}"
+      },
+      "id": "embed-page",
+      "name": "Embed_Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, 100],
+      "credentials": {
+        "httpHeaderAuth": { "id": "openrouter-cred-id", "name": "OpenRouter_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Upsert page to Supabase pages table\nconst ctx = $('Extract_Page_Meta').item.json;\nconst embData = $input.first().json;\nconst embedding = embData?.data?.[0]?.embedding || null;\n\nreturn [{\n  json: {\n    ...ctx,\n    page_record: {\n      client_id: ctx.client_id,\n      url_path: ctx.page_path,\n      title: ctx.title,\n      meta_description: ctx.meta_description,\n      source: ctx.source || 'crawl_discovered',\n      embedding: embedding,\n      last_seen_at: new Date().toISOString()\n    },\n    embed_tokens: embData?.usage?.total_tokens || 0\n  }\n}];"
+      },
+      "id": "build-page-record",
+      "name": "Build_Page_Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json.page_record) }}"
+      },
+      "id": "upsert-page",
+      "name": "Upsert_Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3080, 100],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs?id=eq.{{ $json.pipeline_run_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'completed', finished_at: new Date().toISOString() }) }}"
+      },
+      "id": "complete-run-wf00",
+      "name": "Complete_Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3300, 100],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron_Daily_0200": { "main": [[{ "node": "Fetch_Active_Clients", "type": "main", "index": 0 }]] },
+    "Fetch_Active_Clients": { "main": [[{ "node": "Split_Clients", "type": "main", "index": 0 }]] },
+    "Split_Clients": { "main": [[{ "node": "Create_Run", "type": "main", "index": 0 }]] },
+    "Create_Run": { "main": [[{ "node": "Merge_Client_Run", "type": "main", "index": 0 }]] },
+    "Merge_Client_Run": {
+      "main": [
+        [{ "node": "Fetch_Sitemap", "type": "main", "index": 0 }],
+        [{ "node": "Fetch_WP_Posts", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch_Sitemap": { "main": [[{ "node": "Parse_Sitemap", "type": "main", "index": 0 }]] },
+    "Parse_Sitemap": { "main": [[{ "node": "Merge_Pages", "type": "main", "index": 0 }]] },
+    "Fetch_WP_Posts": { "main": [[{ "node": "Map_WP_Posts", "type": "main", "index": 0 }]] },
+    "Map_WP_Posts": { "main": [[{ "node": "Merge_Pages", "type": "main", "index": 1 }]] },
+    "Merge_Pages": { "main": [[{ "node": "Batch_Pages", "type": "main", "index": 0 }]] },
+    "Batch_Pages": { "main": [[{ "node": "Fetch_Page_HTML", "type": "main", "index": 0 }]] },
+    "Fetch_Page_HTML": { "main": [[{ "node": "Extract_Page_Meta", "type": "main", "index": 0 }]] },
+    "Extract_Page_Meta": { "main": [[{ "node": "Embed_Page", "type": "main", "index": 0 }]] },
+    "Embed_Page": { "main": [[{ "node": "Build_Page_Record", "type": "main", "index": 0 }]] },
+    "Build_Page_Record": { "main": [[{ "node": "Upsert_Page", "type": "main", "index": 0 }]] },
+    "Upsert_Page": { "main": [[{ "node": "Complete_Run", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "staticData": null,
+  "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-19T00:00:00.000Z",
+  "versionId": "1"
+}

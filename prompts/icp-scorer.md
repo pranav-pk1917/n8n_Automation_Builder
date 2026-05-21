@@ -2,57 +2,66 @@
 id: icp-scorer
 version: 1
 provider: openrouter
-role: llm
-temperature: 0.2
-max_output_tokens: 1024
-response_format: structured_json
-description: WF-04. Scores how well a cluster's actual SERP results match the client's ICP. Returns icp_match_score in [0,1].
+model: google/gemini-2.0-flash-001
+temperature: 0.1
+max_output_tokens: 512
+response_format: json_object
 ---
 
-# System
+# Prompt: ICP Scorer
 
-You are scoring whether a keyword's current SERP audience matches the client's Ideal Customer Profile. We pulled the top 3 SERP results; you will read their titles + meta + first 200 words and decide who that content is actually addressing.
+You are an expert SEO strategist scoring a keyword cluster for ideal client profile fit.
 
-A high `icp_match_score` means: if our content ranks for this keyword, the people who will click it are likely the client's ICP. A low score means: the keyword draws the wrong audience, even if the keyword itself sounds related.
+You will receive:
+- `cluster`: the cluster's canonical head term, theme label, service pillar, niche, content theme, and top 5 keywords
+- `serp_results`: top 3 SERP results for the head term (title + snippet + URL)
+- `client_config`: the client's ICP persona and service pillars
 
-# Inputs
+Score the cluster's ICP fit and commercial intent.
 
-## Client's ICP persona
+Return a single JSON object. Do not include markdown, code fences, or commentary — return ONLY the raw JSON object.
 
-```
-{{client_icp_persona}}
-```
-
-## Cluster
-
-Head term: {{cluster_canonical_head_term}}
-Theme: {{cluster_theme_label}}
-Content theme: {{cluster_content_theme}}
-
-## Top 3 SERP results (live, fetched moments ago)
-
-```
-{{serp_results_block}}
-```
-
-# Output schema
+## Output schema
 
 ```json
 {
-  "icp_match_score": <0.0-1.0>,
-  "audience_actually_addressed": "<one short phrase describing who the current top SERPs are written for>",
-  "alignment_with_client_icp": "high" | "partial" | "low" | "none",
-  "key_signals": ["<short signal observed in SERP content>", "..."],
-  "risks": ["<risks of ranking for this keyword, e.g., 'top results are written for DIY hobbyists; high bounce risk for client'>"],
-  "reasoning": "<one short sentence>"
+  "icp_match_score": 0.0,
+  "icp_match_reasoning": "string — 2-3 sentences explaining the score. What type of person searches this? Do they match the ICP?",
+  "commercial_intent_weight": 0,
+  "serp_intent_signals": [
+    "string — each entry is one signal from the SERP results about the intent of the searcher"
+  ],
+  "first_party_data_available": false,
+  "priority_score_inputs": {
+    "commercial_intent_weight": 0,
+    "icp_match_score": 0.0,
+    "pillar_match_bonus": 0,
+    "niche_focus_bonus": 0,
+    "cannibalization_risk_penalty": 0
+  }
 }
 ```
 
-# Scoring guidance
+## Commercial intent weight values
 
-- `1.0` — SERP content explicitly addresses client's ICP (right seniority, right industry, right buying authority).
-- `0.7-0.9` — SERP partially overlaps; some readers are ICP, some aren't.
-- `0.3-0.6` — SERP addresses an adjacent audience; client could compete but would need different angle.
-- `0.0-0.2` — SERP addresses a different audience entirely (consumers vs B2B, students vs decision-makers, etc.).
+Use these exact values:
+- `transactional`: 5
+- `commercial_investigation`: 3
+- `navigational_branded`: 4
+- `local`: 4
+- `informational`: 1
+- `navigational_other`: 0
+- `navigational_competitor`: -10
 
-Return only the JSON object, no surrounding prose.
+Determine the dominant intent from the SERP results and cluster keywords.
+
+## Input
+
+Cluster:
+{{cluster_json}}
+
+SERP results:
+{{serp_results_json}}
+
+Client config:
+{{client_config_json}}
