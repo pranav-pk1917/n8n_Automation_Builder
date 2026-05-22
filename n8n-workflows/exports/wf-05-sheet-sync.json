@@ -232,7 +232,7 @@
     "Write_Cost_Tab": { "main": [[{ "node": "Send_Sync_Notification", "type": "main", "index": 0 }]] }
   },
   "pinData": {},
-  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "errorWorkflow": "a1pfnQHRkmPBWJDv" },
   "staticData": null,
   "tags": [{ "name": "seo-tools" }, { "name": "phase-1" }],
   "triggerCount": 1,

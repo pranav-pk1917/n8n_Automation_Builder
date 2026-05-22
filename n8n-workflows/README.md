@@ -94,7 +94,7 @@ Every HTTP node needs the right credential. In n8n: open the workflow → click 
 |------------------------|------|---------|
 | `Supabase_SEOTools` | HTTP Header Auth | All workflows (Supabase REST) |
 | `OpenRouter_SEOTools` | HTTP Header Auth | WF-ONBOARD, WF-00, WF-02, WF-03, WF-04 |
-| `Slack_SEOTools` | HTTP Header Auth | WF-ONBOARD, WF-02, WF-03, WF-05 |
+| `Slack_SEOTools` | HTTP Header Auth | WF-ONBOARD, WF-02, WF-03, WF-05, SYS-Error-Handler |
 | `PythonWorker_SEOTools` | HTTP Header Auth | WF-03 (`/cluster` on Railway) |
 | `SerpAPI_SEOTools` | HTTP Query Auth | WF-04 |
 | `GoogleSheets_SEOTools` | Google Sheets OAuth2 | WF-05 |
@@ -107,6 +107,8 @@ Every HTTP node needs the right credential. In n8n: open the workflow → click 
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for REST API |
 | `PYTHON_WORKER_URL` | Railway worker base URL (no trailing slash) |
 | `GOOGLE_SHEETS_ID` | Spreadsheet ID for WF-05 |
+| `SLACK_HITL_CHANNEL` | Default Slack channel ID for HITL review cards (WF-02, WF-03, WF-05). Replaces the hardcoded `C0B43A7QG5P` in older exports. |
+| `SLACK_OPS_CHANNEL` | Slack channel ID for `SYS-Error-Handler` ops alerts (uncaught workflow exceptions). |
 
 ---
 
@@ -139,17 +141,21 @@ If something in n8n does not match an export file, **trust what you see in the n
 |-------|------------|
 | `clients` | WF-ONBOARD |
 | `niches` | WF-ONBOARD |
-| `pipeline_runs` | WF-ONBOARD |
+| `pipeline_runs` | WF-ONBOARD, WF-00 (and Phase-2 updates: every webhook workflow) |
+| `onboarding_sessions` | WF-ONBOARD (Phase-2 update — durable cross-execution state) |
 | `pages` | WF-00 |
 | `raw_keywords` | WF-01 |
-| `keyword_graveyard` | Read by WF-01 (dedupe) |
-| `keyword_classifications` | WF-02 |
-| `keyword_clusters` | WF-03, WF-04 |
-| `api_cost_log` | WF-04 |
+| `keyword_classifications` | WF-02 (Phase-2 update: Tier 1 passed/rejected also written here) |
+| `clusters` | WF-03, WF-04 |
+| `keyword_cluster_map` | WF-03 (Phase-2 update — currently never populated) |
+| `api_cost_log` | WF-02, WF-03, WF-04 (Phase-2 update: every LLM/SerpAPI call) |
+
+> The Phase 1 schema and all of these tables are defined in [SEO-Tools/supabase/migrations/0001_initial_schema.sql](../supabase/migrations/0001_initial_schema.sql). Phase-2 schema deltas live in [migrations/](./migrations) within this folder.
 
 ---
 
 ## Need help?
 
+- **Wave 1 (Phase 2 update) — manual setup runbook:** [docs/WAVE-1-MANUAL-SETUP.md](./docs/WAVE-1-MANUAL-SETUP.md)
 - Setup checklist: [MANUAL-SETUP-GUIDE.md](../docs/MANUAL-SETUP-GUIDE.md)
 - Handoff after setup: [HANDOFF-TEMPLATE.md](../docs/HANDOFF-TEMPLATE.md)

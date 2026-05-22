@@ -1,0 +1,188 @@
+{
+  "name": "SYS-Error-Handler",
+  "id": "a1pfnQHRkmPBWJDv",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "connections": {
+    "Error Trigger": { "main": [[{ "node": "Extract Error Context", "type": "main", "index": 0 }]] },
+    "Extract Error Context": { "main": [[{ "node": "IF Can Patch Run", "type": "main", "index": 0 }]] },
+    "IF Can Patch Run": {
+      "main": [
+        [{ "node": "Patch Pipeline Run", "type": "main", "index": 0 }],
+        [{ "node": "Post Ops Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Patch Pipeline Run": { "main": [[{ "node": "IF Is Onboarding", "type": "main", "index": 0 }]] },
+    "IF Is Onboarding": {
+      "main": [
+        [{ "node": "Patch Onboarding Session", "type": "main", "index": 0 }],
+        [{ "node": "Post Ops Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "Patch Onboarding Session": { "main": [[{ "node": "Post Ops Alert", "type": "main", "index": 0 }]] }
+  },
+  "nodes": [
+    {
+      "id": "27157dd9-c371-45a9-b26a-a4687e5cc255",
+      "name": "Sticky Note b950e3a4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [672, 208],
+      "parameters": {
+        "content": "## SYS-Error-Handler — Global Error Workflow\n\n**Trigger:** n8n Error Trigger (bound via Workflow Settings → Error Workflow on every Phase-1 workflow)\n\n**Flow:** Extract context → IF pipeline_run_id recoverable → PATCH pipeline_runs.status=failed → IF onboarding → PATCH onboarding_sessions.status=failed → Slack ops alert (always).\n\n**Env vars used:** SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SLACK_OPS_CHANNEL\n\n**Source:** SEO-Tools/n8n-workflows/sdk/sys-error-handler.ts",
+        "color": 5,
+        "width": 460,
+        "height": 320
+      }
+    },
+    {
+      "id": "1a13c8b6-51c1-430c-aa5f-52d436f4bf85",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 144],
+      "parameters": {}
+    },
+    {
+      "id": "5266c32c-e5fc-4b7b-8037-37ed3e4923f4",
+      "name": "Extract Error Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, 144],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const it = $input.first().json;\nconst exec = it.execution || {};\nconst wf = it.workflow || {};\nconst err = exec.error || {};\nconst rawStack = (err.stack || err.message || 'unknown error').toString();\nconst errorMessage = rawStack.length > 1800 ? rawStack.slice(0, 1800) + '...<truncated>' : rawStack;\nconst failingNode = err.node && err.node.name ? err.node.name : null;\nconst findPipelineRunId = () => {\n  const data = exec.data && exec.data.resultData && exec.data.resultData.runData;\n  if (data && typeof data === 'object') {\n    for (const nodeName of Object.keys(data)) {\n      const runs = data[nodeName];\n      if (!Array.isArray(runs)) continue;\n      for (const r of runs) {\n        const items = r && r.data && r.data.main && r.data.main[0];\n        if (!Array.isArray(items)) continue;\n        for (const item of items) {\n          const j = item && item.json;\n          if (j && j.pipeline_run_id) return j.pipeline_run_id;\n          if (j && j.body && j.body.pipeline_run_id) return j.body.pipeline_run_id;\n        }\n      }\n    }\n  }\n  return null;\n};\nconst pipelineRunId = findPipelineRunId();\nconst workflowName = wf.name || 'unknown';\nconst isOnboard = /onboard/i.test(workflowName);\nreturn [{ json: {\n  pipeline_run_id: pipelineRunId,\n  workflow_id: wf.id || null,\n  workflow_name: workflowName,\n  execution_id: exec.id || null,\n  execution_url: exec.url || null,\n  failing_node: failingNode,\n  error_message: errorMessage,\n  error_class: (err.name || 'Error').toString(),\n  is_onboard: isOnboard,\n  failed_at: new Date().toISOString(),\n  can_patch_run: pipelineRunId !== null\n} }];"
+      }
+    },
+    {
+      "id": "4bd678f9-0b4e-45d2-81df-fd01df650d6d",
+      "name": "IF Can Patch Run",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [448, 144],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "can-patch",
+              "leftValue": "={{ $json.can_patch_run }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "08d94d91-4ee9-404a-9c8a-31b187b88995",
+      "name": "Patch Pipeline Run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [672, 80],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_runs?id=eq.{{ $json.pipeline_run_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'failed', finished_at: $json.failed_at, output_summary: { failed_workflow: $json.workflow_name, failing_node: $json.failing_node, error_class: $json.error_class, error_message: $json.error_message, execution_url: $json.execution_url } }) }}",
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "5e2b1a05-9cb1-4d44-91fb-c5f17a33fb8a",
+      "name": "IF Is Onboarding",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [896, 80],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "is-onboard",
+              "leftValue": "={{ $('Extract Error Context').item.json.is_onboard }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "adb71c39-5648-4e73-83b0-dc61e5d8b299",
+      "name": "Patch Onboarding Session",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1120, 0],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/onboarding_sessions?pipeline_run_id=eq.{{ $('Extract Error Context').item.json.pipeline_run_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'failed', updated_at: $('Extract Error Context').item.json.failed_at }) }}",
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "902b2c35-4eb6-4406-84c6-74691ee8a7d9",
+      "name": "Post Ops Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1344, 144],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json; charset=utf-8" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_OPS_CHANNEL, text: 'n8n workflow failed: ' + $('Extract Error Context').item.json.workflow_name, blocks: [ { type: 'header', text: { type: 'plain_text', text: 'Workflow failed: ' + $('Extract Error Context').item.json.workflow_name } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*Failing node:*\\n' + ($('Extract Error Context').item.json.failing_node || '(unknown)') }, { type: 'mrkdwn', text: '*Error class:*\\n' + $('Extract Error Context').item.json.error_class }, { type: 'mrkdwn', text: '*Pipeline run id:*\\n' + ($('Extract Error Context').item.json.pipeline_run_id || '(not recoverable)') }, { type: 'mrkdwn', text: '*Failed at:*\\n' + $('Extract Error Context').item.json.failed_at } ] }, { type: 'section', text: { type: 'mrkdwn', text: '```' + $('Extract Error Context').item.json.error_message + '```' } } ] }) }}",
+        "options": { "timeout": 10000 }
+      }
+    }
+  ]
+}
+
