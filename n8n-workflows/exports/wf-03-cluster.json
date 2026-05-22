@@ -183,11 +183,59 @@
     },
     {
       "parameters": {
+        "jsCode": "// WAVE 2 FIX: Merge keyword_classification IDs from worker response with the new cluster ID from Write_Cluster\n// Write_Cluster response (prefer=representation) returns the created cluster row with its ID\n// Parse_Cluster_Label has member_ids array of keyword IDs\n\nconst clusterLabel = $('Parse_Cluster_Label').item.json;\nconst writeClusterResp = $input.first().json;\n\n// Extract the new cluster ID (could be array or single object)\nconst newClusterId = Array.isArray(writeClusterResp) ? writeClusterResp[0]?.id : writeClusterResp?.id;\n\nif (!newClusterId) {\n  throw new Error('Write_Cluster did not return cluster ID. Check Prefer: return=representation header.');\n}\n\nreturn [{\n  json: {\n    new_cluster_id: newClusterId,\n    client_id: clusterLabel.client_id,\n    pipeline_run_id: clusterLabel.pipeline_run_id,\n    member_ids: clusterLabel.member_ids || [],\n    head_term: clusterLabel.head_term\n  }\n}];"
+      },
+      "id": "merge-cluster-context",
+      "name": "Merge_Cluster_Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2100, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WAVE 2 FIX: Transform member_ids array into n8n items for bulk insert to keyword_cluster_map\n// Each item = one row in keyword_cluster_map linking a keyword to its cluster\n\nconst ctx = $input.first().json;\nconst memberIds = ctx.member_ids || [];\n\nconst mapRows = memberIds.map(keywordId => ({\n  json: {\n    cluster_id: ctx.new_cluster_id,\n    keyword_classification_id: keywordId,\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    created_at: new Date().toISOString()\n  }\n}));\n\n// If no members, return single item to prevent workflow from hanging\nreturn mapRows.length > 0 \n  ? mapRows \n  : [{ json: { skip_write: true } }];"
+      },
+      "id": "build-map-rows",
+      "name": "Build_Map_Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/keyword_cluster_map",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "write-cluster-map",
+      "name": "Write_Cluster_Map",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2400, 0],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
         "conditions": {
           "conditions": [
             {
               "id": "needs-review",
-              "leftValue": "={{ $json.needs_taxonomy_review }}",
+              "leftValue": "={{ $('Parse_Cluster_Label').item.json.needs_taxonomy_review }}",
               "rightValue": true,
               "operator": { "type": "boolean", "operation": "equals" }
             }
@@ -269,7 +317,10 @@
     "Parse_Worker_Response": { "main": [[{ "node": "LLM_Label_Cluster", "type": "main", "index": 0 }]] },
     "LLM_Label_Cluster": { "main": [[{ "node": "Parse_Cluster_Label", "type": "main", "index": 0 }]] },
     "Parse_Cluster_Label": { "main": [[{ "node": "Write_Cluster", "type": "main", "index": 0 }]] },
-    "Write_Cluster": { "main": [[{ "node": "IF_Needs_Taxonomy_Review", "type": "main", "index": 0 }]] },
+    "Write_Cluster": { "main": [[{ "node": "Merge_Cluster_Context", "type": "main", "index": 0 }]] },
+    "Merge_Cluster_Context": { "main": [[{ "node": "Build_Map_Rows", "type": "main", "index": 0 }]] },
+    "Build_Map_Rows": { "main": [[{ "node": "Write_Cluster_Map", "type": "main", "index": 0 }]] },
+    "Write_Cluster_Map": { "main": [[{ "node": "IF_Needs_Taxonomy_Review", "type": "main", "index": 0 }]] },
     "IF_Needs_Taxonomy_Review": {
       "main": [
         [{ "node": "Write_Taxonomy_Suggestion", "type": "main", "index": 0 }],

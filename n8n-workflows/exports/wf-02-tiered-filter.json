@@ -224,6 +224,44 @@
     },
     {
       "parameters": {
+        "jsCode": "// WAVE 2 FIX: Convert passed_tier1 and rejected_tier1 arrays to n8n items\n// These will be written to keyword_classifications in parallel to the borderline/Tier2 path\n\nconst scoreResults = $input.first().json;\nconst clientContext = $('Fetch_Client_Config').first().json;\n\nconst classificationItems = [];\n\n// Process passed keywords\nfor (const kw of (scoreResults.passed_tier1 || [])) {\n  classificationItems.push({\n    json: {\n      raw_keyword_id: kw.raw_keyword_id,\n      client_id: clientContext.id,\n      pipeline_run_id: clientContext.pipeline_run_id,\n      decided_by: 'tier1_embedding',\n      status: 'passed',\n      pos_score: kw.pos_score,\n      neg_score: kw.neg_score,\n      embedding: kw.embedding,\n      scored_at: new Date().toISOString()\n    }\n  });\n}\n\n// Process rejected keywords\nfor (const kw of (scoreResults.rejected_tier1 || [])) {\n  classificationItems.push({\n    json: {\n      raw_keyword_id: kw.raw_keyword_id,\n      client_id: clientContext.id,\n      pipeline_run_id: clientContext.pipeline_run_id,\n      decided_by: 'tier1_embedding',\n      status: 'rejected',\n      pos_score: kw.pos_score,\n      neg_score: kw.neg_score,\n      embedding: kw.embedding,\n      scored_at: new Date().toISOString()\n    }\n  });\n}\n\n// Return all items (n8n will fan out to N items)\nreturn classificationItems.length > 0 \n  ? classificationItems \n  : [{ json: { skip_write: true } }];"
+      },
+      "id": "build-tier1-classification-rows",
+      "name": "Build_Tier1_Classification_Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/keyword_classifications",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "write-tier1-classifications",
+      "name": "Write_Tier1_Classifications",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, 300],
+      "credentials": {
+        "httpHeaderAuth": { "id": "supabase-cred-id", "name": "Supabase_SEOTools" }
+      }
+    },
+    {
+      "parameters": {
         "jsCode": "// Build Tier 2 LLM classify requests for borderline keywords\n// Only send keywords where tier1_decision === 'borderline'\nconst ctx = $json;\nconst borderline = ctx.borderline || [];\n\nreturn borderline.map(kw => ({\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    client_config: ctx.client_config,\n    raw_keyword_id: kw.raw_keyword_id,\n    keyword: kw.keyword,\n    embedding: kw.embedding,\n    tier1_pos_score: kw.pos_score,\n    tier1_neg_score: kw.neg_score\n  }\n}));"
       },
       "id": "prep-tier2",
@@ -357,7 +395,13 @@
     "Prepare_Tier1": { "main": [[{ "node": "Batch_For_Embedding", "type": "main", "index": 0 }]] },
     "Batch_For_Embedding": { "main": [[{ "node": "Embed_Keywords_Batch", "type": "main", "index": 0 }]] },
     "Embed_Keywords_Batch": { "main": [[{ "node": "Score_Tier1", "type": "main", "index": 0 }]] },
-    "Score_Tier1": { "main": [[{ "node": "Prep_Tier2_Items", "type": "main", "index": 0 }]] },
+    "Score_Tier1": {
+      "main": [
+        [{ "node": "Build_Tier1_Classification_Rows", "type": "main", "index": 0 }],
+        [{ "node": "Prep_Tier2_Items", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build_Tier1_Classification_Rows": { "main": [[{ "node": "Write_Tier1_Classifications", "type": "main", "index": 0 }]] },
     "Prep_Tier2_Items": { "main": [[{ "node": "LLM_Tier2_Classify", "type": "main", "index": 0 }]] },
     "LLM_Tier2_Classify": { "main": [[{ "node": "Parse_Tier2_Response", "type": "main", "index": 0 }]] },
     "Parse_Tier2_Response": { "main": [[{ "node": "Write_Classification", "type": "main", "index": 0 }]] },

@@ -287,12 +287,17 @@
     "Fetch_WP_Posts": { "main": [[{ "node": "Map_WP_Posts", "type": "main", "index": 0 }]] },
     "Map_WP_Posts": { "main": [[{ "node": "Merge_Pages", "type": "main", "index": 1 }]] },
     "Merge_Pages": { "main": [[{ "node": "Batch_Pages", "type": "main", "index": 0 }]] },
-    "Batch_Pages": { "main": [[{ "node": "Fetch_Page_HTML", "type": "main", "index": 0 }]] },
+    "Batch_Pages": {
+      "main": [
+        [{ "node": "Fetch_Page_HTML", "type": "main", "index": 0 }],
+        [{ "node": "Complete_Run", "type": "main", "index": 0 }]
+      ]
+    },
     "Fetch_Page_HTML": { "main": [[{ "node": "Extract_Page_Meta", "type": "main", "index": 0 }]] },
     "Extract_Page_Meta": { "main": [[{ "node": "Embed_Page", "type": "main", "index": 0 }]] },
     "Embed_Page": { "main": [[{ "node": "Build_Page_Record", "type": "main", "index": 0 }]] },
     "Build_Page_Record": { "main": [[{ "node": "Upsert_Page", "type": "main", "index": 0 }]] },
-    "Upsert_Page": { "main": [[{ "node": "Complete_Run", "type": "main", "index": 0 }]] }
+    "Upsert_Page": { "main": [[{ "node": "Batch_Pages", "type": "main", "index": 0 }]] }
   },
   "pinData": {},
   "settings": { "executionOrder": "v1", "saveManualExecutions": true, "errorWorkflow": "a1pfnQHRkmPBWJDv" },
