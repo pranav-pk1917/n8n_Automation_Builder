@@ -618,3 +618,104 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 2. Use `detect_changes` for code review.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
+
+
+# ============================================================
+# ⚠️ CRITICAL FILE PROTECTION RULES ⚠️
+# ============================================================
+# **SCOPE: These rules apply to ALL projects and files in the workspace.**
+# **These rules are MANDATORY and OVERRIDE any default behaviors.**
+
+## ABSOLUTE PROHIBITIONS
+
+### 1. NEVER Delete Files Without Explicit Permission
+- **NEVER** use `rm`, `Remove-Item`, `del`, or any delete command
+- **NEVER** delete files via tools like `Delete`, file system APIs, or scripts
+- **NEVER** suggest file deletion unless the user has EXPLICITLY approved it
+- **EXCEPTION**: Only when the user writes: "delete [specific file]" or "remove [specific file]"
+
+### 2. NEVER Remove Files from Git Tracking
+- **NEVER** use `git rm` without explicit permission
+- **NEVER** run `git rm -r --cached` without explicit permission
+- **EXCEPTION**: Only when the user EXPLICITLY requests it
+
+### 3. NEVER Move or Rename Files Without Permission
+- **NEVER** use `mv`, `Move-Item`, `Rename-Item`, or rename operations
+- **NEVER** move files to different directories
+- **EXCEPTION**: Only when the user EXPLICITLY requests it
+
+### 4. NEVER Use Destructive Git Operations
+- **NEVER** use `git reset --hard` (UNLESS explicitly approved)
+- **NEVER** use `git clean -fd` (UNLESS explicitly approved)
+- **NEVER** use `git checkout -- <file>` to discard changes (UNLESS explicitly approved)
+- **NEVER** force push to shared branches (`git push --force`, `git push -f`) (UNLESS explicitly approved)
+- **EXCEPTION**: Only when the user EXPLICITLY approves each operation
+
+### 5. NEVER Use Destructive Filesystem Operations
+- **NEVER** use `rm -rf` or `Remove-Item -Recurse -Force` (UNLESS explicitly approved)
+- **NEVER** overwrite files without preserving a backup
+- **EXCEPTION**: Only when the user EXPLICITLY approves
+
+## MANDATORY APPROVAL PROCESS
+
+Before ANY destructive operation (delete, remove, move, rename, destructive git/filesystem command):
+
+1. **STOP and ASK** the user for explicit permission
+2. **LIST** the exact files/operations that will be affected
+3. **EXPLAIN** why the operation is necessary
+4. **WAIT** for user confirmation
+5. **CREATE A BACKUP** if possible (e.g., copy to backup location, create a git commit first)
+6. **DOCUMENT** the operation in your response
+
+## SAFE ALTERNATIVES (No Permission Needed)
+
+- **Renaming files**: Always safe (just changes the name, not destructive)
+- **Creating new files**: Always safe
+- **Modifying file content**: Always safe
+- **Restoring files from git**: Always safe
+- **Creating backups**: Always safe and RECOMMENDED before any risky operation
+
+## RECOVERY PROCEDURES
+
+If files are accidentally deleted or lost:
+1. **Check git reflog**: `git reflog` to find lost commits
+2. **Use `git fsck`**: `git fsck --lost-found` to find dangling objects
+3. **Restore from git**: `git checkout <commit> -- <path>` to restore files
+4. **Use `git reset --hard <commit>`** ONLY if you know the exact commit
+5. **Ask user for permission** before any recovery operation that might affect current state
+
+## WHY THESE RULES EXIST
+
+**Incident History:**
+
+### June 5, 2026 - SEO-Tools File Deletion
+A `git reset --hard` operation accidentally deleted multiple critical files from the SEO-Tools project, including:
+- EXECUTION_PLAN.md (639 lines)
+- PROJECT-AUDIT.md (487 lines)
+- MANUAL-SETUP-GUIDE.md (70KB+)
+- DATABASE-STATE-REPORT.md
+- PHASE-C-REPORT.md
+- SUPABASE-SETUP-GUIDE.md
+- And several other important files
+
+### June 6, 2026 - n8n_Automation_Builder Mass Deletion
+When SEO-Tools was added as a subdirectory, 314 files were deleted from the n8n_Automation_Builder root directory. This required a complete restoration from commit 7efd032.
+
+**These rules prevent similar accidents by requiring explicit permission before any destructive file operation.**
+
+## ENFORCEMENT
+
+These rules are **MANDATORY** and apply to:
+- All file operations in the workspace
+- All git operations
+- All filesystem operations
+- All Cursor AI agent actions
+- All automated scripts and commands
+
+**Violation of these rules may result in permanent data loss and project corruption.**
+
+If you are uncertain whether an operation is destructive, **ASK FIRST**. It is always better to ask than to cause data loss.
+
+# ============================================================
+# END OF FILE PROTECTION RULES
+# ============================================================
