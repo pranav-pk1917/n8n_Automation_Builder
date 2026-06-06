@@ -1,0 +1,111 @@
+{
+  "name": "compy_datascrape_dispatcher",
+  "nodes": [
+    {
+      "id": "manual-trigger",
+      "name": "Start_Scrape_Job",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {}
+    },
+    {
+      "id": "set-target-url",
+      "name": "Set_Target_URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [450, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "target-url-field",
+              "name": "target_url",
+              "value": "https://competitor-website.com",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "create-job-ticket",
+      "name": "Create_Job_Ticket_Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [700, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO scrape_jobs (target_url, status, created_at) VALUES ($1, 'PENDING', NOW()) RETURNING id, target_url",
+        "options": {
+          "queryReplacement": "={{ $json.target_url }}"
+        }
+      }
+    },
+    {
+      "id": "firecrawl-request",
+      "name": "Dispatch_Firecrawl_Scrape",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [950, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/crawl",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "firecrawlApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.target_url }}\",\n  \"limit\": 10,\n  \"scrapeOptions\": {\n    \"formats\": [\"markdown\"]\n  },\n  \"webhook\": {\n    \"url\": \"YOUR_RECEIVER_WEBHOOK_URL_HERE\",\n    \"metadata\": {\n      \"jobId\": \"{{ $json.id }}\"\n    }\n  }\n}"
+      }
+    },
+    {
+      "id": "update-dispatched",
+      "name": "Update_Job_Dispatched",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1200, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE scrape_jobs SET status = 'DISPATCHED', firecrawl_job_id = $1 WHERE id = $2::uuid",
+        "options": {
+          "queryReplacement": "={{ $json.id }},={{ $('Create_Job_Ticket_Pending').item.json.id }}"
+        }
+      }
+    },
+    {
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [200, 100],
+      "parameters": {
+        "color": 6,
+        "width": 1100,
+        "height": 150,
+        "content": "## 🚀 Competitor Intelligence Dispatcher\n**Purpose**: Takes a target URL, logs a job ticket in Supabase, and dispatches an async scrape job to Firecrawl with webhook callback.\n\n**IMPORTANT**: Replace `YOUR_RECEIVER_WEBHOOK_URL_HERE` in the Firecrawl node with the Production Webhook URL from the Receiver workflow."
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Start_Scrape_Job": {
+      "main": [[{"node": "Set_Target_URL", "type": "main", "index": 0}]]
+    },
+    "Set_Target_URL": {
+      "main": [[{"node": "Create_Job_Ticket_Pending", "type": "main", "index": 0}]]
+    },
+    "Create_Job_Ticket_Pending": {
+      "main": [[{"node": "Dispatch_Firecrawl_Scrape", "type": "main", "index": 0}]]
+    },
+    "Dispatch_Firecrawl_Scrape": {
+      "main": [[{"node": "Update_Job_Dispatched", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "competitor-intelligence-dispatcher"
+  }
+}

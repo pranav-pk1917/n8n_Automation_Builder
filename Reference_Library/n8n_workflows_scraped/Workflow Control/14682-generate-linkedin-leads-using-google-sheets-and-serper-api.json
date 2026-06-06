@@ -1,0 +1,430 @@
+{
+    "nodes": [
+        {
+            "id": "a6e6a0ad-ad95-4f18-a24b-c591782c6855",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -3440,
+                1616
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "79db2eeb-b37b-4304-a07b-82770c82ef1c",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2880,
+                1664
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "076c56d4-40c6-4ef7-9164-61006ab7a036",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2400,
+                1664
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "5143bcc6-7e7a-49f1-bb29-719124381f37",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1936,
+                1680
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "03a36db7-3fa8-437c-9bac-d8689fd32808",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1408,
+                1616
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "9c2154e4-fe7a-41f3-aafb-67c30ef7628c",
+            "name": "Sticky Note5",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -832,
+                1680
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "aca640f8-f789-4929-b211-a4d919101686",
+            "name": "Sticky Note6",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -384,
+                1680
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "c783e0a4-90e4-4929-802f-378d0fa83204",
+            "name": "Sticky Note7",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                64,
+                1680
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "beb59b9c-b5ec-476d-bc27-89ce8b548514",
+            "name": "Manual Start",
+            "type": "n8n-nodes-base.manualTrigger",
+            "position": [
+                -2832,
+                1792
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "0c87a2de-af3b-4761-a527-4248edd2190b",
+            "name": "Batch Process 50 Pages",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                -1888,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 3
+        },
+        {
+            "id": "b19c6b42-548a-4537-a723-693408357009",
+            "name": "Wait for Rate Limit",
+            "type": "n8n-nodes-base.wait",
+            "position": [
+                -1296,
+                1808
+            ],
+            "webhookId": "rate-limit-pause",
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "7ca99055-9d5a-4eec-9ac8-375c0bf07e8d",
+            "name": "Deduplicate Profiles by URL",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -560,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "cd2ba6d7-aca8-4b7e-b9ad-142b39942f39",
+            "name": "Read Existing Profiles from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -336,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 4
+        },
+        {
+            "id": "0f584645-1db0-4842-9583-a448e92131ef",
+            "name": "Filter New Profiles",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -112,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 2,
+            "alwaysOutputData": true
+        },
+        {
+            "id": "54689f67-4826-4d41-9bb0-5a6bbeb18c40",
+            "name": "Get Search Criteria",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -2576,
+                1792
+            ],
+            "parameters": {},
+            "typeVersion": 4
+        },
+        {
+            "id": "df7399dd-e066-4c0c-bf30-5c3deb949131",
+            "name": "Post to LinkedIn Search API",
+            "type": "n8n-nodes-base.httpRequest",
+            "onError": "continueErrorOutput",
+            "position": [
+                -1712,
+                1824
+            ],
+            "parameters": {},
+            "typeVersion": 4.2,
+            "alwaysOutputData": false
+        },
+        {
+            "id": "0eba081e-9ac4-444a-a3d3-b02646203081",
+            "name": "Extract Profile Data",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -784,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 2,
+            "alwaysOutputData": true
+        },
+        {
+            "id": "55d69cc8-52e4-4ec5-88af-ded771e26f62",
+            "name": "Check for New Profiles",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                112,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "5c108e3d-fa68-47eb-96c1-b73453977bd2",
+            "name": "Append New Profiles to Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                336,
+                1808
+            ],
+            "parameters": {},
+            "typeVersion": 4
+        },
+        {
+            "id": "807fea98-fe0c-402e-b59e-102d85ed9dc4",
+            "name": "Create Paginated Search Queries",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -2128,
+                1792
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "0b933d6b-fc9e-46df-94d9-0dcef1b59420",
+            "name": "Filter Search Results",
+            "type": "n8n-nodes-base.filter",
+            "position": [
+                -2352,
+                1792
+            ],
+            "parameters": {},
+            "typeVersion": 2.3
+        },
+        {
+            "id": "27ebbb84-fd0b-4f01-8b60-74804d50f65b",
+            "name": "Terminate on Error",
+            "type": "n8n-nodes-base.stopAndError",
+            "position": [
+                -1360,
+                2016
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Manual Start": {
+            "main": [
+                [
+                    {
+                        "node": "Get Search Criteria",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter New Profiles": {
+            "main": [
+                [
+                    {
+                        "node": "Check for New Profiles",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Search Criteria": {
+            "main": [
+                [
+                    {
+                        "node": "Filter Search Results",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait for Rate Limit": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Profile Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Profile Data": {
+            "main": [
+                [
+                    {
+                        "node": "Deduplicate Profiles by URL",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Search Results": {
+            "main": [
+                [
+                    {
+                        "node": "Create Paginated Search Queries",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Batch Process 50 Pages": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Post to LinkedIn Search API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check for New Profiles": {
+            "main": [
+                [
+                    {
+                        "node": "Append New Profiles to Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Batch Process 50 Pages",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Deduplicate Profiles by URL": {
+            "main": [
+                [
+                    {
+                        "node": "Read Existing Profiles from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Post to LinkedIn Search API": {
+            "main": [
+                [
+                    {
+                        "node": "Wait for Rate Limit",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Terminate on Error",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Append New Profiles to Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Batch Process 50 Pages",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Paginated Search Queries": {
+            "main": [
+                [
+                    {
+                        "node": "Batch Process 50 Pages",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Existing Profiles from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Filter New Profiles",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/14682-generate-linkedin-leads-using-google-sheets-and-serper-api/",
+    "_scraped_at": "2026-05-07"
+}

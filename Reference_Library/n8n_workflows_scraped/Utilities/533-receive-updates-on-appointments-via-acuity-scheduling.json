@@ -1,0 +1,22 @@
+{
+    "nodes": [
+        {
+            "name": "Acuity Scheduling Trigger",
+            "type": "n8n-nodes-base.acuitySchedulingTrigger",
+            "position": [
+                880,
+                400
+            ],
+            "webhookId": "b326732d-9473-469f-a421-dd823d26b945",
+            "parameters": {
+                "event": "appointment.scheduled"
+            },
+            "credentials": {
+                "acuitySchedulingApi": "acuity_creds"
+            },
+            "typeVersion": 1
+        }
+    ],
+    "connections": {},
+    "_source_url": "https://n8n.io/workflows/533-receive-updates-on-appointments-via-acuity-scheduling/"
+}

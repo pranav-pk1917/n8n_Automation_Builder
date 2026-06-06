@@ -1,0 +1,461 @@
+{
+    "meta": {
+        "instanceId": "393ca9e36a1f81b0f643c72792946a5fe5e49eb4864181ba4032e5a408278263",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "f7c0451f-7982-43d2-a511-162802263f66",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -176,
+                944
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "952017e7-bba6-4649-8896-45d46549ae0d",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                384,
+                1040
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "2ead129b-c829-48e9-aafe-7be997891f71",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1264,
+                992
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "80e5aafe-9a2e-47e1-b0ef-10faa8239d52",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1760,
+                1008
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "1bf64cdf-be8d-4589-b721-13c480d3e2b5",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                2592,
+                1008
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "d42fde61-affa-4a76-81b4-6d03a8ec6a88",
+            "name": "Sticky Note5",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3344,
+                944
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "ab667bd7-bb4b-4959-a14f-dc18a35e7557",
+            "name": "Filter Valid SEO Items",
+            "type": "n8n-nodes-base.filter",
+            "position": [
+                1072,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "7fb9a972-d4da-4e44-a833-562ba8785968",
+            "name": "Read Client Info from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                624,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 4.5
+        },
+        {
+            "id": "beb84910-3c92-46a0-a8ca-6b08fbc2d882",
+            "name": "Read SEO Info from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                848,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 4.5
+        },
+        {
+            "id": "51769da5-851c-4fe7-9613-0d0098d21a9b",
+            "name": "Loop Over SEO Items",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                1312,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 3
+        },
+        {
+            "id": "96db62fd-9d64-49db-b91e-ec8ac654da7b",
+            "name": "Generate Meta Tags and H1 Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "maxTries": 5,
+            "position": [
+                2640,
+                1168
+            ],
+            "parameters": {},
+            "retryOnFail": true,
+            "typeVersion": 1.9,
+            "waitBetweenTries": 5000
+        },
+        {
+            "id": "174746cd-9909-434b-8640-4af0c432f031",
+            "name": "Generate Content Brief Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "maxTries": 5,
+            "position": [
+                3008,
+                1168
+            ],
+            "parameters": {},
+            "retryOnFail": true,
+            "typeVersion": 1.9,
+            "waitBetweenTries": 5000
+        },
+        {
+            "id": "e4ab5a6b-2b77-4ee2-aca7-3ed31097dd9b",
+            "name": "When Workflow Executed Manually",
+            "type": "n8n-nodes-base.manualTrigger",
+            "position": [
+                432,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "a6f762ee-3982-4e72-8474-1b0326f14c59",
+            "name": "Scrape Page with Firecrawl",
+            "type": "@mendable/n8n-nodes-firecrawl.firecrawl",
+            "onError": "continueRegularOutput",
+            "position": [
+                2192,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "662f53e2-7153-448b-b0b2-fb3989561e9d",
+            "name": "Split Organic Results",
+            "type": "n8n-nodes-base.splitOut",
+            "position": [
+                1808,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "7f40e56c-db7c-4d8d-841e-4297eab7a083",
+            "name": "Take Top 10 Results",
+            "type": "n8n-nodes-base.limit",
+            "position": [
+                2000,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "96732b3c-0344-46d1-b13d-8b61a2e092a0",
+            "name": "Collect Firecrawl Items",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                2400,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "17e4ad54-abfa-49ea-bb57-965fc775efce",
+            "name": "Fetch SERP Results via Apify",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                1568,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 4.4,
+            "alwaysOutputData": true
+        },
+        {
+            "id": "b660bc01-52b2-4440-a566-2f4d2a7190fe",
+            "name": "Claude Sonnet Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+            "position": [
+                2896,
+                1360
+            ],
+            "parameters": {},
+            "typeVersion": 1.3
+        },
+        {
+            "id": "dec4fa1d-04ca-4453-9be1-1ff375c25c05",
+            "name": "Parse Structured JSON Output",
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "position": [
+                2736,
+                1360
+            ],
+            "parameters": {},
+            "typeVersion": 1.2
+        },
+        {
+            "id": "9fb2609e-e5c4-4d72-9eca-29dcd479ff5a",
+            "name": "Update SEO Row in Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                3392,
+                1168
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "7bcf1502-a5be-4ba9-8185-1240967a8784",
+            "name": "Sticky Note13",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1216,
+                560
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "37ccb447-a7ae-46dc-90eb-468cb087ce28",
+            "name": "Sticky Note16",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1216,
+                144
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Claude Sonnet Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Generate Meta Tags and H1 Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Generate Content Brief Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over SEO Items": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Fetch SERP Results via Apify",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Take Top 10 Results": {
+            "main": [
+                [
+                    {
+                        "node": "Scrape Page with Firecrawl",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Split Organic Results": {
+            "main": [
+                [
+                    {
+                        "node": "Take Top 10 Results",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Valid SEO Items": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over SEO Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Collect Firecrawl Items": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Meta Tags and H1 Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update SEO Row in Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over SEO Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read SEO Info from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Filter Valid SEO Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Scrape Page with Firecrawl": {
+            "main": [
+                [
+                    {
+                        "node": "Collect Firecrawl Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch SERP Results via Apify": {
+            "main": [
+                [
+                    {
+                        "node": "Split Organic Results",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Content Brief Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Update SEO Row in Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Structured JSON Output": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "Generate Meta Tags and H1 Agent",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Client Info from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Read SEO Info from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Meta Tags and H1 Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Content Brief Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "When Workflow Executed Manually": {
+            "main": [
+                [
+                    {
+                        "node": "Read Client Info from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/8946-generate-seo-meta-tags-and-content-briefs-from-serp-analysis-with-claude-ai/",
+    "_scraped_at": "2026-05-07"
+}

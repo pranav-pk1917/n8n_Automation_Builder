@@ -1,0 +1,420 @@
+{
+    "meta": {
+        "instanceId": "e2b15b282b858b62c3aea85cbd1eb8519f2cf996e01ad206f85ed2f48445d251",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "e54dad79-6fca-4be6-96ef-ea07de04252f",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "position": [
+                -2048,
+                192
+            ],
+            "webhookId": "d8a051a8-f83e-4ed3-8cd1-d9f2f7a5b498",
+            "parameters": {
+                "path": "checkin_v1",
+                "options": {},
+                "httpMethod": "POST",
+                "responseMode": "responseNode"
+            },
+            "typeVersion": 2.1
+        },
+        {
+            "id": "889de179-acbd-4c47-9952-6d92ee7f6f4d",
+            "name": "Parse Input",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -1824,
+                192
+            ],
+            "parameters": {
+                "jsCode": "const body = $input.first().json.body;\n\n// Pull all vehicle inspection fields\nreturn [{\n  json: {\n    badge_id:       body.badge_id       ?? 'unknown',\n    truck_number:   body.truck_number   ?? 'unknown',\n    trailer_number: body.trailer_number ?? '',\n    odometer:       Number(body.odometer ?? 0),\n    fuel_level:     body.fuel_level     ?? '',\n    mode:           body.mode           ?? 'short_haul',\n    submitted_at:   body.submitted_at   ?? '',\n    timezone:       body.timezone       ?? '',\n\n    // Inspection results\n    defect_count:       Number(body.defect_count    ?? 0),\n    unchecked_count:    Number(body.unchecked_count ?? 0),\n    defect_details:     body.defect_details ?? '',\n    inspection_results: body.inspection_results ?? {},\n    prev_dvir:          body.prev_dvir ?? 'not_reviewed',\n\n    // Cargo\n    cargo_type:   body.cargo_type   ?? '',\n    cargo_secure: body.cargo_secure ?? '',\n    hazmat:       body.hazmat       ?? 'none',\n\n    // HOS\n    hours_today:   body.hours_today   ?? '',\n    hours_off:     body.hours_off     ?? '',\n    hours_week:    body.hours_week    ?? '',\n    haul_duration: body.haul_duration ?? '',\n    break_status:  body.break_status  ?? 'na',\n\n    // Flags\n    flags: body.flags ?? {},\n\n    // Certifications\n    certifications: body.certifications ?? {},\n\n    // Notes\n    free_text: body.free_text ?? ''\n  }\n}];"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "6e84e011-1a39-4b21-a02d-8e56fdd25c07",
+            "name": "Score Calculator",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -1600,
+                192
+            ],
+            "parameters": {
+                "jsCode": "const d = $input.first().json;\nconst mode = d.mode ?? 'short_haul';\nconst defects = Number(d.defect_count ?? 0);\n\n// Base score starts at 0 \u2014 vehicle inspection is pass/fail oriented\nlet score = 0;\n\n// \u2500\u2500 DEFECT SCORING \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// Each defect adds significant weight\nscore += Math.min(defects * 15, 60);\n\n// Unchecked items are a concern \u2014 driver skipped inspection steps\nconst unchecked = Number(d.unchecked_count ?? 0);\nif (unchecked >= 10) score += 20;\nelse if (unchecked >= 5) score += 10;\n\n// Previous DVIR not reviewed is serious\nif (d.prev_dvir === 'not_reviewed') score += 25;\n\n// \u2500\u2500 HOS SCORING \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst hoursToday = d.hours_today ?? '';\nif (hoursToday === '11') score += 20;\nelse if (hoursToday === '9') score += 10;\n\nconst hoursOff = d.hours_off ?? '';\nif (hoursOff === '4') score += 20;\nelse if (hoursOff === '6') score += 10;\n\n// \u2500\u2500 LONG HAUL EXTRA \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nif (mode === 'long_haul') {\n  if (d.hours_week === 'limit') score += 20;\n  else if (d.hours_week === 'high') score += 10;\n  if (d.haul_duration === 'max') score += 10;\n  else if (d.haul_duration === 'long') score += 5;\n}\n\n// \u2500\u2500 CARGO \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nif (d.cargo_secure === 'unsecured') score += 30;\n\nreturn [{\n  json: {\n    ...d,\n    risk_score: Math.min(100, Math.round(score))\n  }\n}];"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "c9e228b7-a155-4785-9ca6-f272ce5c8728",
+            "name": "Flag Rules",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -1376,
+                192
+            ],
+            "parameters": {
+                "jsCode": "const d = $input.first().json;\n\nlet baseScore = Number(d.risk_score ?? 0);\nlet bonus = 0;\n\n// \u2500\u2500 HARD STOPS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// These force score to 100 regardless of anything else\nconst hardStop = !!(\n  d.flags?.alcohol_8hr ||\n  d.flags?.substance_use ||\n  d.flags?.hazmat_no_endorse ||\n  d.flags?.cargo_unsecured ||\n  d.flags?.prev_dvir_missing ||\n  d.flags?.break_not_taken\n);\n\n// \u2500\u2500 SCORED FLAGS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nif (d.flags?.hos_violation)     bonus += 25;\nif (d.flags?.cognitive_fail)    bonus += 15;\nif (d.flags?.vehicle_concern)   bonus += 10;\nif (d.flags?.requested_support) bonus += 10;\nif (d.flags?.has_defects)       bonus += 10;\n\n// \u2500\u2500 FINAL CALCULATION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst finalScore = hardStop\n  ? 100\n  : Math.min(100, baseScore + bonus);\n\nreturn [{\n  json: {\n    ...d,\n    risk_score: finalScore,\n    hard_stop: hardStop,\n    rule_bonus: bonus\n  }\n}];"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "f343b425-3212-4fb2-b897-17adb9af1755",
+            "name": "Ollama AI",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                -1152,
+                192
+            ],
+            "parameters": {
+                "url": "http://host.docker.internal:11434/api/generate",
+                "method": "POST",
+                "options": {},
+                "jsonBody": "={\n  \"model\": \"tinyllama\",\n  \"prompt\": \"You are a fleet safety analyst reviewing a commercial vehicle pre-trip inspection report.\\n\\nAnalyze ONLY the information provided below. Do NOT invent details or assumptions.\\n\\nReturn ONLY this JSON. Start with { and end with }. No other text.\\n\\nFormat: {\\\"adjustment\\\": <integer -20 to 20>, \\\"reason\\\": \\\"<one sentence summary of the key safety concern or clearance>\\\"}\\n\\nRules:\\n- adjustment must be an integer between -20 and 20\\n- Positive adjustment = higher risk, negative = lower risk\\n- no extra fields, no explanation outside JSON\\n- Base your assessment on defects, flags, and driver notes only\\n- If no defects or concerns, return adjustment 0\\n\\n---\\n\\nVehicle: {{ $json.truck_number }}\\nTrip type: {{ $json.mode }}\\nDefects found: {{ $json.defect_count }}\\nDefect details: {{ $json.defect_details || 'None' }}\\nPrevious DVIR: {{ $json.prev_dvir }}\\nCargo: {{ $json.cargo_type }} \u2014 secured: {{ $json.cargo_secure }}\\nHazmat: {{ $json.hazmat }}\\nHours driven today: {{ $json.hours_today }}\\nHours off before shift: {{ $json.hours_off }}\\nDriver notes: {{ $json.free_text || 'None' }}\\n\\nFlags raised:\\nAlcohol: {{ $json.flags.alcohol_8hr }}\\nSubstance: {{ $json.flags.substance_use }}\\nHOS violation: {{ $json.flags.hos_violation }}\\nVehicle concern: {{ $json.flags.vehicle_concern }}\\nCargo unsecured: {{ $json.flags.cargo_unsecured }}\\nHazmat no endorsement: {{ $json.flags.hazmat_no_endorse }}\",\n  \"stream\": false\n}",
+                "sendBody": true,
+                "jsonHeaders": "{ \"Content-Type\": \"application/json\" }",
+                "sendHeaders": true,
+                "specifyBody": "json",
+                "specifyHeaders": "json"
+            },
+            "typeVersion": 4.4
+        },
+        {
+            "id": "d9d31e24-4fbc-440b-9dd5-fb051761d141",
+            "name": "Parse AI Response",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -928,
+                192
+            ],
+            "parameters": {
+                "jsCode": "const d = $input.first().json;\n\nlet parsed = null;\n\ntry {\n  const raw = d.response ?? '';\n  const cleaned = raw.replace(/```json|```/g, '').trim();\n  const maybeArray = JSON.parse(cleaned);\n  parsed = Array.isArray(maybeArray) ? maybeArray[0] : maybeArray;\n} catch (e) {\n  parsed = null;\n}\n\nconst adjustment =\n  parsed && typeof parsed.adjustment === 'number'\n    ? Math.max(-20, Math.min(20, parsed.adjustment))\n    : 0;\n\nconst reason = parsed?.reason ?? 'No AI analysis available';\n\nreturn [{\n  json: {\n    ...d,\n    ai: { adjustment, reason, raw: d.response ?? '' }\n  }\n}];"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "c508d280-0069-4e00-a47a-a0b5bfe3cfdd",
+            "name": "Final Score",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -704,
+                192
+            ],
+            "parameters": {
+                "jsCode": "const d = $input.first().json;\n\nconst risk_score  = $('Flag Rules').first().json.risk_score  ?? 0;\nconst hard_stop   = $('Flag Rules').first().json.hard_stop   ?? false;\nconst rule_bonus  = $('Flag Rules').first().json.rule_bonus  ?? 0;\nconst badge_id    = $('Flag Rules').first().json.badge_id    ?? 'unknown';\nconst flags       = $('Flag Rules').first().json.flags       ?? {};\n\nconst ai_adjustment = d.ai?.adjustment ?? 0;\n\nlet final_score = risk_score + ai_adjustment;\nfinal_score = Math.max(0, Math.min(100, final_score));\n\nif (hard_stop) final_score = 100;\n\nlet status = 'ok';\nif (final_score >= 75) status = 'critical';\nelse if (final_score >= 55) status = 'warning';\nelse if (final_score >= 40) status = 'elevated';\n\nreturn [{\n  json: {\n    ...d,\n    badge_id,\n    risk_score,\n    hard_stop,\n    rule_bonus,\n    flags,\n    final_score,\n    status\n  }\n}];"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "422dba1e-b920-4f6e-bc47-1e07ffbb90aa",
+            "name": "Route by Status",
+            "type": "n8n-nodes-base.switch",
+            "position": [
+                -480,
+                192
+            ],
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "version": 3,
+                                    "leftValue": "",
+                                    "caseSensitive": true,
+                                    "typeValidation": "strict"
+                                },
+                                "combinator": "and",
+                                "conditions": [
+                                    {
+                                        "id": "1ef6e6c3-04d2-494a-b6c1-553366f6f3aa",
+                                        "operator": {
+                                            "type": "number",
+                                            "operation": "lte"
+                                        },
+                                        "leftValue": "={{ $json.final_score }}",
+                                        "rightValue": 50
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "version": 3,
+                                    "leftValue": "",
+                                    "caseSensitive": true,
+                                    "typeValidation": "strict"
+                                },
+                                "combinator": "and",
+                                "conditions": [
+                                    {
+                                        "id": "77e419bd-dddf-487a-b8e7-e8f79bb7c2f2",
+                                        "operator": {
+                                            "type": "number",
+                                            "operation": "gt"
+                                        },
+                                        "leftValue": "={{ $json.final_score }}",
+                                        "rightValue": 51
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "typeVersion": 3.4
+        },
+        {
+            "id": "bca2a7d8-c6ec-4fe5-bf61-5fe7d8dce408",
+            "name": "Respond OK",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "position": [
+                -256,
+                288
+            ],
+            "parameters": {
+                "options": {},
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({\n  \"status\": $('Final Score').first().json.status,\n  \"final_score\": $('Final Score').first().json.final_score,\n  \"hard_stop\": $('Final Score').first().json.hard_stop,\n  \"badge_id\": $('Final Score').first().json.badge_id,\n  \"reason\": $('Final Score').first().json.ai.reason,\n  \"message\": \"Vehicle inspection complete. Cleared for dispatch.\"\n}) }}"
+            },
+            "typeVersion": 1.5
+        },
+        {
+            "id": "c0dade1c-c215-4cb5-805f-7564a541f2a4",
+            "name": "Respond Flagged",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "position": [
+                -256,
+                96
+            ],
+            "parameters": {
+                "options": {},
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({\n  \"status\": $('Final Score').first().json.status,\n  \"final_score\": $('Final Score').first().json.final_score,\n  \"hard_stop\": $('Final Score').first().json.hard_stop,\n  \"badge_id\": $('Final Score').first().json.badge_id,\n  \"reason\": $('Final Score').first().json.ai.reason,\n  \"message\": $('Final Score').first().json.hard_stop\n    ? \"DO NOT DISPATCH. A mandatory hold has been triggered. Contact safety immediately.\"\n    : \"Inspection flagged. Please speak with dispatch before operating this vehicle.\"\n}) }}"
+            },
+            "typeVersion": 1.5
+        },
+        {
+            "id": "cfd23226-00ba-4d69-a45f-285fdc130ed8",
+            "name": "Send an Email",
+            "type": "n8n-nodes-base.emailSend",
+            "position": [
+                -16,
+                304
+            ],
+            "webhookId": "7a34a1b1-a8a9-47ac-91b6-d7d77dbcb726",
+            "parameters": {
+                "html": "=PRE-TRIP INSPECTION ALERT\n==========================\n\nDriver ID:      {{ $('Final Score').first().json.badge_id }}\nUnit Number:    {{ $('Parse Input').item.json.truck_number }}{{ $json.final_score }}\nTrailer:        {{ $('Parse Input').first().json.trailer_number || 'N/A' }}\nOdometer:       {{ $('Parse Input').first().json.odometer }} mi\nTrip Type:      {{ $('Parse Input').first().json.mode }}\nSubmitted:      {{ $('Parse Input').first().json.submitted_at }}\nTimezone:       {{ $('Parse Input').first().json.timezone }}\n\nSTATUS:         {{ $('Final Score').first().json.status.toUpperCase() }}\nCOMPLIANCE SCORE: {{ $('Final Score').first().json.final_score }}\nMANDATORY HOLD: {{ $('Final Score').first().json.hard_stop ? 'YES \u2014 DO NOT DISPATCH' : 'No' }}\n\nAI ASSESSMENT\n-------------\n{{ $('Final Score').first().json.ai.reason }}\n\nVEHICLE INSPECTION\n------------------\nDefects Found:        {{ $('Parse Input').first().json.defect_count }}\nDefect Details:       {{ $('Parse Input').first().json.defect_details || 'None' }}\nPrevious DVIR:        {{ $('Parse Input').first().json.prev_dvir }}\nCargo Type:           {{ $('Parse Input').first().json.cargo_type }}\nCargo Secured:        {{ $('Parse Input').first().json.cargo_secure }}\nHazmat:               {{ $('Parse Input').first().json.hazmat }}\n\nHOURS OF SERVICE\n----------------\nHours Driven Today:   {{ $('Parse Input').first().json.hours_today }}\nHours Off Before:     {{ $('Parse Input').first().json.hours_off }}\nHours This Week:      {{ $('Parse Input').first().json.hours_week || 'N/A' }}\nHaul Duration:        {{ $('Parse Input').first().json.haul_duration || 'N/A' }}\nBreak Status:         {{ $('Parse Input').first().json.break_status }}\n\nFLAGS REPORTED\n--------------\nAlcohol (8hr):        {{ $('Final Score').first().json.flags.alcohol_8hr ? 'YES' : 'No' }}\nSubstance Use:        {{ $('Final Score').first().json.flags.substance_use ? 'YES' : 'No' }}\nHOS Violation:        {{ $('Final Score').first().json.flags.hos_violation ? 'YES' : 'No' }}\nVehicle Concern:      {{ $('Final Score').first().json.flags.vehicle_concern ? 'YES' : 'No' }}\nDVIR Missing:         {{ $('Final Score').first().json.flags.prev_dvir_missing ? 'YES' : 'No' }}\nHazmat No Endorse:    {{ $('Final Score').first().json.flags.hazmat_no_endorse ? 'YES' : 'No' }}\nCargo Unsecured:      {{ $('Final Score').first().json.flags.cargo_unsecured ? 'YES' : 'No' }}\nCognitive Fail:       {{ $('Final Score').first().json.flags.cognitive_fail ? 'YES' : 'No' }}\nBreak Not Taken:      {{ $('Final Score').first().json.flags.break_not_taken ? 'YES' : 'No' }}\nSupport Requested:    {{ $('Final Score').first().json.flags.requested_support ? 'YES' : 'No' }}\n\nDRIVER NOTES\n------------\n{{ $('Parse Input').first().json.free_text || 'None provided' }}\n\n---\nThis alert was generated automatically by DriverClear pre-trip inspection system.\nFinal dispatch authority rests with the fleet manager.\ndriver-clear.com",
+                "options": {},
+                "subject": "=\ud83d\ude9b Pre-Trip Alert \u2014 Unit {{ $('Parse Input').item.json.truck_number }}{{ $json.final_score }} / Driver {{ $('Final Score').first().json.badge_id }}",
+                "toEmail": "RECIEVER_EMAIL@gmail.com",
+                "fromEmail": "SENDER_EMAIL@gmail.com"
+            },
+            "credentials": {
+                "smtp": {
+                    "id": "YOUR_ID_HERE",
+                    "name": "SMTP account"
+                }
+            },
+            "typeVersion": 2.1
+        },
+        {
+            "id": "cfdf935e-2915-43ef-ab0c-92f7088ce786",
+            "name": "ntfy Notification",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                -32,
+                96
+            ],
+            "parameters": {
+                "url": "https://ntfy.sh/YOUR_API_KEY_HERE",
+                "body": "=Driver: {{ $('Final Score').first().json.badge_id }}\nUnit: {{ $('Parse Input').item.json.truck_number }}\nStatus: {{ $('Final Score').first().json.status.toUpperCase() }}\nScore: {{ $('Final Score').first().json.final_score }}\nDefects: {{ $('Parse Input').first().json.defect_count }}\n{{ $('Final Score').first().json.hard_stop ? 'MANDATORY HOLD \u2014 DO NOT DISPATCH' : '' }}\n{{ $('Final Score').first().json.ai.reason }}",
+                "method": "POST",
+                "options": {},
+                "sendBody": true,
+                "contentType": "raw"
+            },
+            "typeVersion": 4.4
+        },
+        {
+            "id": "288063ce-428e-4679-9155-6c3ba03aef16",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2352,
+                -176
+            ],
+            "parameters": {
+                "width": 608,
+                "height": 768,
+                "content": "## FleetCheck \u2014 Pre-Trip Driver Safety System\n\nA FMCSA-aligned pre-trip check-in system for commercial drivers. \nCombines AI-powered risk scoring, automatic supervisor alerts, \nand a dispatcher dashboard into one self-hosted package.\n\n**What's included:**\n- n8n workflow (AI scoring, flag detection, alert routing)\n- Flask web app (index.html check-in form + dispatcher dashboard)\n- SQLite audit trail of every submission\n- Gmail + ntfy push notification alerts\n\n---\n\n**Requirements**\n- Windows or Linux PC (8GB RAM minimum for AI model)\n- Python 3.9+\n- Docker Desktop\n- ngrok account (free tier works, paid for static URL)\n- Gmail account with App Password enabled\n- ntfy app on dispatcher's phone (free)\n\n---\n\n**Setup Instructions**\n\n**1. Install Python dependencies**\nDownload the Flask app files \napp.py, templates folder) and run:\n    pip install flask requests\n\n**2. Install Docker Desktop**\nDownload from docker.com and create an account.\nThen run:\n    docker volume create n8n_data\n\n    docker run -d \\\n      --name n8n \\\n      --restart unless-stopped \\\n      -p 5678:5678 \\\n      -e GENERIC_TIMEZONE=\"America/Chicago\" \\\n      -e N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true \\\n      -e N8N_RUNNERS_ENABLED=true \\\n      -v n8n_data:/home/node/.n8n \\\n      docker.n8n.io/n8nio/n8n\n"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "c5b17da8-ed7a-4435-bec0-412ccfad46b4",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1744,
+                -176
+            ],
+            "parameters": {
+                "width": 640,
+                "height": 768,
+                "content": "\nOpen http://localhost:5678 and create your n8n account.\n\n**3. Import this workflow**\nIn n8n go to: top menu \u2192 Import from file \u2192 select the \ndownloaded workflow JSON.\n\n**4. Configure Gmail alerts**\n- Create a Gmail App Password at myaccount.google.com \u2192 \n  Security \u2192 App Passwords\n- In n8n open the Send Email node and enter your Gmail \n  address and App Password\n- Set the To field to your dispatcher's email address\n\n**5. Configure ntfy notifications**\n- Download the ntfy app on your dispatcher's phone (iOS/Android)\n- Choose a private channel name e.g. fleet-alerts-yourcompany\n\n\n\n\n\n\n\n\n\n- In n8n open the ntfy HTTP Request node and update the URL \n  to: https://ntfy.sh/your-channel-name\n- Subscribe to the same channel in the ntfy app\n\n**6. Install Ollama (local AI)**\nDownload from ollama.com then run:\n    ollama pull mistral\n\n**7. Install ngrok**\nDownload from ngrok.com and sign up. Then run:\n    ngrok config add-authtoken YOUR_TOKEN\n    ngrok http 5000\n\nFor a permanent URL (paid plan):\n    ngrok http 5000 --url yourname.ngrok.app\n\n"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "1416ffae-e3bc-438d-a2ba-0f55774afefe",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1104,
+                -176
+            ],
+            "parameters": {
+                "width": 592,
+                "height": 768,
+                "content": "**8. Start the app**\n    python app.py\n**9. Publish the workflow**\nIn n8n, open the workflow and click Publish in the top right.\n**10. Test it**\nOpen your ngrok URL in a browser and submit a test check-in.\nCheck http://localhost:5000/dashboard to see results.\n\n\n---\n\n\n**How It Works**\nDriver opens the ngrok URL on any device \u2192 fills out \npre-trip check-in \u2192 AI analyzes responses \u2192 dispatcher \nreceives instant alert if flagged \u2192 all submissions logged \nto local SQLite database \u2192 dispatcher reviews via dashboard.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n---\n\n**Disclaimer**\nThis is a voluntary safety support tool designed to assist \nfleet operators in identifying potential driver fitness concerns. \nIt does not constitute a medical assessment, legal certification, \nor guarantee of regulatory compliance. Final dispatch authority \nrests with the fleet operator. All FMCSA regulations remain the \nresponsibility of the carrier."
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "807a8010-b010-4ed9-a3d1-f5bcc4d82b3d",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -512,
+                -176
+            ],
+            "parameters": {
+                "width": 1024,
+                "height": 768,
+                "content": "## Additional Configurations\n\nDispatcher Dashboard can be Accessed at: http://localhost:5000/dashboard\nIt shows all submissions, scores, flags, and hard stops.\nThe data can be exported to CSV for compliance records.\nThe page auto-refreshes every 60 seconds.\n\n    **When a driver passes an assessment there are no red flags and so there is no notification that is sent.*\n    **Be sure to setup the HTTP Request node to configure ntfy notifications**\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    \n\n\n\n\n\n\n\n**Be sure to configure the \"Send an Email\" node by using a \n    Google account with app_password, \n    see https://support.google.com/accounts/answer/185833?hl=en# \n    for help with setting up those credentials for the node.**\n\n\n \nTo test the system, have all previous steps completed, and apps and scripts running\nmodify the app.py webhook to reflect testing and then visit the ngrok URL, \na badge number like \"Badge ID TEST001\" which can be used for testing without affecting real records. "
+            },
+            "typeVersion": 1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Input",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ollama AI": {
+            "main": [
+                [
+                    {
+                        "node": "Parse AI Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Flag Rules": {
+            "main": [
+                [
+                    {
+                        "node": "Ollama AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Final Score": {
+            "main": [
+                [
+                    {
+                        "node": "Route by Status",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Input": {
+            "main": [
+                [
+                    {
+                        "node": "Score Calculator",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Respond Flagged": {
+            "main": [
+                [
+                    {
+                        "node": "Send an Email",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "ntfy Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Route by Status": {
+            "main": [
+                [
+                    {
+                        "node": "Respond OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Respond Flagged",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Score Calculator": {
+            "main": [
+                [
+                    {
+                        "node": "Flag Rules",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse AI Response": {
+            "main": [
+                [
+                    {
+                        "node": "Final Score",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/15448-score-and-route-pre-trip-vehicle-inspections-with-local-ai-and-alerts/",
+    "_scraped_at": "2026-05-07"
+}

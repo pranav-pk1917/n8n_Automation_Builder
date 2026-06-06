@@ -1,0 +1,301 @@
+{
+    "id": "xxxxxxxxxxxxxxx",
+    "meta": {
+        "instanceId": "123456abcd1234abcd123456abcdef",
+        "templateCredsSetupCompleted": true
+    },
+    "name": "Lusha leads enrichment to CRM via HTTP request",
+    "tags": [],
+    "nodes": [
+        {
+            "id": "b9e44558-f1df-42f0-bdb6-0b5493084b1c",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [
+                880,
+                416
+            ],
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 10
+                        }
+                    ]
+                }
+            },
+            "typeVersion": 1.2
+        },
+        {
+            "id": "59fd304e-7ec0-411e-8f5f-f4b8ba496e23",
+            "name": "Split Out",
+            "type": "n8n-nodes-base.splitOut",
+            "position": [
+                1280,
+                416
+            ],
+            "parameters": {
+                "options": {},
+                "fieldToSplitOut": "easy_leads"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "b83e6ba1-c17e-420e-9bb2-e3b818576a5b",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                0,
+                0
+            ],
+            "parameters": {
+                "width": 768,
+                "height": 992,
+                "content": "## Automated Lead Enrichment from Lusha to Easy8 CRM  \n**Try out using a native Easy8 node to enrich CRM lead data with Lusha fields.**\n\n### About Workflow  \nThis workflow fetches enriched Leads data from Lusha, cleans and formats it, and pushes it to Easy8 CRM. It is triggered on a schedule and runs fully automated once set up.\n\n### Use Case  \nDesigned for sales and marketing teams using Easy8 CRM. It automates the update of Leads with enriched Lusha data\u2014saving manual effort and ensuring updated info like phone, employee count, and LinkedIn.\n\n### How it works  \n- Time-based trigger  \n=> Runs on a schedule defined in Schedule Trigger  \n- Data fetch  \n=> Pulls lead data using \u201cget-many-easy_leads\u201d  \n- Split Out\n=> Splits array \u2192 filters empty phone rows \u2192 transforms employee count (e.g., \"1,000-5,000\" \u2192 5000)  \n- HTTP Request \n=> Gets GET information from Lusha  \n- Final output step  \n=> Sends PUT requests to Easy8 CRM to update lead records\n\n### How to use  \n- Set the **Schedule Trigger** to define how often the workflow should run  \n- In the **\"Get Leads from Easy8\"** node, apply a saved filter in Easy8 to target the correct lead records  (ID Query)\n- Ensure the Lusha API connection is working and returns enriched data for the selected leads  \n- Adjust the **\"Contact Data Transformation for CRM\"** node to clean and map fields as needed\u2014e.g., format employee numbers, remove unwanted characters, or align with CRM field structure  \n- Run tests on a small data sample to confirm that updates are correctly applied in Easy8 CRM before enabling full automation\n\n\n### Requirements  \n- Easy8 application\n=> ideally technical user for API calls with specific permissions\n- Lusha access \n\n### Need Help? \n- Reach out through n8n community => https://community.n8n.io/u/easy8\n- Contact our team directly => https://www.easy8.com/ai-agency\n- Visit our youtube channel => https://www.youtube.com/@Easy8Group\n\n "
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "b3a2e5b7-37c5-459f-9fc1-cfff92771a74",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                816,
+                0
+            ],
+            "parameters": {
+                "color": 7,
+                "width": 1520,
+                "height": 992,
+                "content": "##  Automated Lead Enrichment from Lusha to Easy8 CRM  \n**1) Schedule Trigger** \u2014 Triggers the workflow on a time-based schedule  \n**2) Get Leads from Easy8** \u2014 Fetches multiple lead records from Easy8 for one day (Today)\n**3) Split Out** \u2014 Splits the fetched data into individual items for processing  \n**4) Get Data from Lusha** \u2014 Retrieves data from Lusha via HTTP request  \n**5) Filter Leads Found in Lusha** \u2014 Excludes rows where the data field is empty  \n**6) Contact Data Transformation for CRM** \u2014 Transforms and cleans the data fields\n**7) Update Leads in Easy8 CRM** \u2014 Sends updated contact and company info (phone, employees, LinkedIn) to Easy8 CRM  "
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "b48a4432-718a-4ce1-9201-ce276af0cd9c",
+            "name": "Get Data from Lusha",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                1488,
+                416
+            ],
+            "parameters": {
+                "url": "https://api.lusha.com/v2/person",
+                "options": {},
+                "sendQuery": true,
+                "sendHeaders": true,
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "email",
+                            "value": "={{ $json.email }}"
+                        },
+                        {
+                            "name": "filterBy",
+                            "value": "emailAddresses"
+                        },
+                        {
+                            "name": "firstName",
+                            "value": "={{ $json.first_name }}"
+                        },
+                        {
+                            "name": "lastName",
+                            "value": "={{ $json.last_name }}"
+                        },
+                        {
+                            "name": "companyName",
+                            "value": "={{ $json.company_name }}"
+                        }
+                    ]
+                },
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                }
+            },
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "abcdef12345",
+                    "name": "Your credential name"
+                }
+            },
+            "typeVersion": 4.2
+        },
+        {
+            "id": "ca9c2152-2e04-419f-baf7-5cbfaa398df7",
+            "name": "Filter Leads Found in Lusha",
+            "type": "n8n-nodes-base.filter",
+            "position": [
+                1712,
+                416
+            ],
+            "parameters": {
+                "options": {},
+                "conditions": {
+                    "options": {
+                        "version": 2,
+                        "leftValue": "",
+                        "caseSensitive": true,
+                        "typeValidation": "strict"
+                    },
+                    "combinator": "and",
+                    "conditions": [
+                        {
+                            "id": "966c411e-a5ea-4409-989e-ae6295c78d16",
+                            "operator": {
+                                "type": "string",
+                                "operation": "notExists",
+                                "singleValue": true
+                            },
+                            "leftValue": "={{ $json.contact.error.name }}",
+                            "rightValue": "={{ $json.contact.error.name }}"
+                        }
+                    ]
+                }
+            },
+            "typeVersion": 2.2
+        },
+        {
+            "id": "9e79a9f1-3607-4bba-a9f4-2c2bfbd82dd7",
+            "name": "Contact Data Transformation for CRM",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                1936,
+                416
+            ],
+            "parameters": {
+                "jsCode": "const items = $input.all();\n\nconst transformedItems = items.map((item) => {\n  const contact = item.json.contact;\n  \n  // Skip if there's an error\n  if (contact.error) {\n    return {\n      json: {\n        error: contact.error,\n        isCreditCharged: contact.isCreditCharged\n      }\n    };\n  }\n  \n  const data = contact.data;\n  \n  // Transform company size array [min, max] to just the max number\n  let companySize = null;\n  if (data.company?.companySize && Array.isArray(data.company.companySize)) {\n    companySize = data.company.companySize[1]; // Take the upper bound\n  }\n  \n  // Transform revenue range array [min, max] to just the max number\n  let revenueRange = null;\n  if (data.company?.revenueRange && Array.isArray(data.company.revenueRange)) {\n    revenueRange = data.company.revenueRange[1]; // Take the upper bound\n  }\n  \n  // Extract primary email (first in array)\n  const primaryEmail = data.emailAddresses?.[0]?.email || null;\n  const primaryEmailType = data.emailAddresses?.[0]?.emailType || null;\n  const primaryEmailConfidence = data.emailAddresses?.[0]?.emailConfidence || null;\n  \n  // Extract primary phone (first in array)\n  const primaryPhone = data.phoneNumbers?.[0]?.number || null;\n  const primaryPhoneType = data.phoneNumbers?.[0]?.phoneType || null;\n  \n  // Extract secondary phone (second in array)\n  const secondaryPhone = data.phoneNumbers?.[1]?.number || null;\n  const secondaryPhoneType = data.phoneNumbers?.[1]?.phoneType || null;\n  \n  // Build flattened object for CRM\n  return {\n    json: {\n      // Person Info\n      firstName: data.firstName || null,\n      lastName: data.lastName || null,\n      fullName: data.fullName || null,\n      personId: data.personId || null,\n      \n      // Contact Details\n      email: primaryEmail,\n      emailType: primaryEmailType,\n      emailConfidence: primaryEmailConfidence,\n      phone: primaryPhone,\n      phoneType: primaryPhoneType,\n      secondaryPhone: secondaryPhone,\n      secondaryPhoneType: secondaryPhoneType,\n      linkedinUrl: data.socialLinks?.linkedin || null,\n      \n      // Job Info\n      jobTitle: data.jobTitle?.title || null,\n      jobDepartment: data.jobTitle?.departments?.[0] || null,\n      jobSeniority: data.jobTitle?.seniority || null,\n      jobStartDate: data.jobStartDate || null,\n      \n      // Location\n      country: data.location?.country || null,\n      countryIso2: data.location?.country_iso2 || null,\n      city: data.location?.city || null,\n      continent: data.location?.continent || null,\n      isEuContact: data.location?.is_eu_contact || false,\n      \n      // Company Info\n      companyName: data.company?.name || null,\n      companyId: data.companyId || null,\n      companyDomain: data.company?.domains?.homepage || null,\n      companyWebsite: data.company?.homepageUrl || null,\n      companyDescription: data.company?.description || null,\n      companySize: companySize,\n      companyRevenue: revenueRange,\n      companyIndustry: data.company?.mainIndustry || null,\n      companySubIndustry: data.company?.subIndustry || null,\n      companyCity: data.company?.location?.city || null,\n      companyCountry: data.company?.location?.country || null,\n      companyLinkedin: data.company?.social?.linkedin || null,\n      companyLogoUrl: data.company?.logoUrl || null,\n      \n      // Previous Job Info\n      previousCompanyName: data.previousJob?.company?.name || null,\n      previousCompanyDomain: data.previousJob?.company?.domain || null,\n      previousJobTitle: data.previousJob?.jobTitle?.title || null,\n      \n      // Meta\n      isCreditCharged: contact.isCreditCharged,\n      updateDate: data.updateDate || null\n    }\n  };\n});\n\nreturn transformedItems;"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "3cbd00ab-7df2-497c-88da-c3d92876fdd2",
+            "name": "Get Leads from Easy8",
+            "type": "@easy8/n8n-nodes-easy8.easy8",
+            "position": [
+                1088,
+                416
+            ],
+            "parameters": {
+                "resource": "easy_leads"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "e4446a47-4fd6-47a4-8494-17c12d511393",
+            "name": "Update Leads in Easy8 CRM",
+            "type": "n8n-nodes-base.httpRequest",
+            "notes": "https://your-easy8-app.com/easy_leads/{{ $json.ID }}.json\n\nhttps://your-easy8-app.com/easy_leads/EXAMPLE_LEAD_ID.json\n\n{\n  \"easy_lead\": {\n    \"mobile_phone\": \"{{ $json['Mobile phone'] }}\",\n    \"number_of_employees\": 0\n  }\n}",
+            "position": [
+                2160,
+                416
+            ],
+            "parameters": {
+                "url": "=https://your-easy8-app.com/easy_leads/{{ $('Split Out').item.json.id }}.json",
+                "method": "PUT",
+                "options": {
+                    "batching": {
+                        "batch": {
+                            "batchSize": 1
+                        }
+                    }
+                },
+                "jsonBody": "={\n  \"easy_lead\": {\n    \"mobile_phone\": {{ $json.phone ? JSON.stringify($json.phone) : '\"\"' }},\n    \"number_of_employees\": {{ $json.companySize != null ? $json.companySize : 0 }},\n    \"custom_fields\": [\n      {\n        \"id\": 123,\n        \"value\": {{ $json.linkedinUrl ? JSON.stringify($json.linkedinUrl) : null }}\n      }\n    ]\n  }\n}",
+                "sendBody": true,
+                "specifyBody": "json",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth"
+            },
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "abcedf12345",
+                    "name": "Your credential name"
+                }
+            },
+            "typeVersion": 4.2
+        }
+    ],
+    "active": false,
+    "pinData": {},
+    "settings": {
+        "binaryMode": "separate",
+        "executionOrder": "v1"
+    },
+    "versionId": "123456-abcd-1234-abcd-123456abcdef",
+    "connections": {
+        "Split Out": {
+            "main": [
+                [
+                    {
+                        "node": "Get Data from Lusha",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Leads from Easy8",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Data from Lusha": {
+            "main": [
+                [
+                    {
+                        "node": "Filter Leads Found in Lusha",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Leads from Easy8": {
+            "main": [
+                [
+                    {
+                        "node": "Split Out",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Leads Found in Lusha": {
+            "main": [
+                [
+                    {
+                        "node": "Contact Data Transformation for CRM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Contact Data Transformation for CRM": {
+            "main": [
+                [
+                    {
+                        "node": "Update Leads in Easy8 CRM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/10726-lusha-to-easy8-crm-automated-lead-enrichment/",
+    "_scraped_at": "2026-05-07"
+}

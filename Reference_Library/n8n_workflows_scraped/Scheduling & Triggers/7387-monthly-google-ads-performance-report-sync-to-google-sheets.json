@@ -1,0 +1,250 @@
+{
+    "meta": {
+        "instanceId": "393ca9e36a1f81b0f643c72792946a5fe5e49eb4864181ba4032e5a408278263",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "d5ade1d1-117b-4f2a-b0dc-ef12dbb83411",
+            "name": "Sticky Note13",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1584,
+                -912
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "c0c9aed5-4c33-461a-bb27-345896ac2739",
+            "name": "Sticky Note16",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1584,
+                -1328
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "e9a091f5-4df9-4b25-b167-66e5c2f678d4",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                848,
+                -528
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "5971ba65-ce12-4056-86c4-58b37861225c",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1360,
+                -528
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "ae391634-be2b-46be-a366-e505df11c7ba",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1776,
+                -528
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "0d2c40ff-3adb-40fa-8b8e-340baba8cace",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                2240,
+                -528
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "726f5cfa-ae82-4e42-9644-b6408e28667d",
+            "name": "Every 3rd of Month at 10am",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "notes": "10 du mois",
+            "position": [
+                1408,
+                -368
+            ],
+            "parameters": {},
+            "notesInFlow": true,
+            "typeVersion": 1.2
+        },
+        {
+            "id": "62943e43-3303-4afe-9a95-4a255a8e0ea2",
+            "name": "Read Clients from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                1600,
+                -368
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "1305861e-3758-4dcc-a4fa-ab75f49dc00f",
+            "name": "Loop Over Clients",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                1824,
+                -368
+            ],
+            "parameters": {},
+            "typeVersion": 3
+        },
+        {
+            "id": "485e8c94-32f8-44a8-8ffa-90fbc405121a",
+            "name": "Post Google Ads Query",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                2064,
+                -368
+            ],
+            "parameters": {},
+            "typeVersion": 4.2,
+            "alwaysOutputData": true
+        },
+        {
+            "id": "216880c6-d642-4948-b549-d93ef3d85aff",
+            "name": "Append Ads Data to Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                2496,
+                -368
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "5e7037ea-40e2-4ed9-97ea-8a01d9a0ce5f",
+            "name": "Flatten API Response Items",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                2288,
+                -368
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "cbf44a1b-f391-4753-87ed-7291d264cdee",
+            "name": "Wait Between Batches",
+            "type": "n8n-nodes-base.wait",
+            "position": [
+                2720,
+                -368
+            ],
+            "webhookId": "f366a793-4127-4ae1-8a75-5993ef44d9f3",
+            "parameters": {},
+            "typeVersion": 1.1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Loop Over Clients": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Post Google Ads Query",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait Between Batches": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Post Google Ads Query": {
+            "main": [
+                [
+                    {
+                        "node": "Flatten API Response Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Clients from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Append Ads Data to Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Wait Between Batches",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Every 3rd of Month at 10am": {
+            "main": [
+                [
+                    {
+                        "node": "Read Clients from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Flatten API Response Items": {
+            "main": [
+                [
+                    {
+                        "node": "Append Ads Data to Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/7387-monthly-google-ads-performance-report-sync-to-google-sheets/",
+    "_scraped_at": "2026-05-07"
+}

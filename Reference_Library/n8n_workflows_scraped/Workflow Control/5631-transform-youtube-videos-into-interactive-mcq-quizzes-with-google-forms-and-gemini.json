@@ -1,0 +1,451 @@
+{
+    "meta": {
+        "instanceId": "d80b5150263fe72aa8e869b415c9976cc4068f6d829d47aec881a843e81db62f",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "a9d881c8-7bd2-4731-9190-dfdc71feee7c",
+            "name": "Set Fields: Define Outcome",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                -1380,
+                670
+            ],
+            "parameters": {},
+            "typeVersion": 3.4
+        },
+        {
+            "id": "0ad13e7e-0184-4a95-b58f-5949849eba0c",
+            "name": "If: Was an error detected?",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                -1600,
+                795
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "14b9683c-e1f4-4559-865b-a345da7d7146",
+            "name": "Google Gemini Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "position": [
+                -1160,
+                900
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "1b283330-f4e9-44b6-aebf-018d45c7f9e4",
+            "name": "Structured Output Parser",
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "position": [
+                -960,
+                900
+            ],
+            "parameters": {},
+            "typeVersion": 1.2
+        },
+        {
+            "id": "8040c890-8a38-455a-a5b9-064bfb5d24b1",
+            "name": "Loop Over Items",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                0,
+                420
+            ],
+            "parameters": {},
+            "typeVersion": 3
+        },
+        {
+            "id": "0a9c007e-7767-4849-bd05-d0b1ecb5c14c",
+            "name": "filter",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                -2260,
+                945
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "e963159e-716a-4693-b03e-b7646a1322ac",
+            "name": "Input YouTube URL",
+            "type": "n8n-nodes-base.formTrigger",
+            "notes": "https://youtu.be/cZQPDLgPtNg?si=Ze6zOu5oTpF8QMq0",
+            "position": [
+                -2480,
+                945
+            ],
+            "webhookId": "e2885d2e-0bd8-4891-916c-0c679782869d",
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "8d7b2422-a214-4993-af3f-f898e3ca190f",
+            "name": "Set Prompt and Model",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                -2040,
+                870
+            ],
+            "parameters": {},
+            "typeVersion": 3.4
+        },
+        {
+            "id": "b6c30d65-0157-4856-a5c7-05dc73db566e",
+            "name": "HTTP Request to Gemini",
+            "type": "n8n-nodes-base.httpRequest",
+            "onError": "continueErrorOutput",
+            "position": [
+                -1820,
+                870
+            ],
+            "parameters": {},
+            "typeVersion": 4.2,
+            "alwaysOutputData": false
+        },
+        {
+            "id": "20189418-6cfe-4bf3-b4ac-dad375673dab",
+            "name": "Extract JSON",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "onError": "continueErrorOutput",
+            "position": [
+                -1160,
+                670
+            ],
+            "parameters": {},
+            "typeVersion": 1.5
+        },
+        {
+            "id": "93b3900b-02b2-44e0-b167-7e337b7e2135",
+            "name": "Create a Google Form",
+            "type": "n8n-nodes-base.httpRequest",
+            "onError": "continueErrorOutput",
+            "position": [
+                -660,
+                520
+            ],
+            "parameters": {},
+            "typeVersion": 4.2
+        },
+        {
+            "id": "93e8ca01-8c33-40f2-b925-d9dc485b7940",
+            "name": "Prepare Questions for API call",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                -260,
+                420
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "95142722-9a47-4f48-bece-9a7813f61a95",
+            "name": "Create MCQ Quizzes",
+            "type": "n8n-nodes-base.httpRequest",
+            "onError": "continueErrorOutput",
+            "maxTries": 5,
+            "position": [
+                200,
+                520
+            ],
+            "parameters": {},
+            "retryOnFail": true,
+            "typeVersion": 4.2
+        },
+        {
+            "id": "ea54a41d-0b2d-4a8d-aede-e6f2b108f02a",
+            "name": "Error Output",
+            "type": "n8n-nodes-base.form",
+            "position": [
+                160,
+                960
+            ],
+            "webhookId": "07b8f426-4177-47ed-bba6-27f968c6758f",
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "68f30765-f7f4-472f-b144-f2988b65a693",
+            "name": "Redirect to Google Form",
+            "type": "n8n-nodes-base.form",
+            "position": [
+                200,
+                320
+            ],
+            "webhookId": "5dc0fe0e-fd39-4751-94f5-744616313e37",
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "e4f108b5-884e-483c-a3d2-662096a91e2e",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2560,
+                720
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "eb20cf7c-630d-43a7-9e80-53613196e632",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2080,
+                560
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "34233649-1635-43b3-b264-b0a6aa67d845",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1220,
+                300
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "6f2fb7b1-a5ab-444e-9dd7-ec6116e0f53c",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -380,
+                100
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "0a103f0b-cd29-4952-b7e6-32887a4e6eb4",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -380,
+                760
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "filter": {
+            "main": [
+                [
+                    {
+                        "node": "Set Prompt and Model",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Error Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract JSON": {
+            "main": [
+                [
+                    {
+                        "node": "Create a Google Form",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Error Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over Items": {
+            "main": [
+                [
+                    {
+                        "node": "Redirect to Google Form",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Create MCQ Quizzes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Input YouTube URL": {
+            "main": [
+                [
+                    {
+                        "node": "filter",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create MCQ Quizzes": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Error Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create a Google Form": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Questions for API call",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Error Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Prompt and Model": {
+            "main": [
+                [
+                    {
+                        "node": "HTTP Request to Gemini",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "HTTP Request to Gemini": {
+            "main": [
+                [
+                    {
+                        "node": "If: Was an error detected?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Error Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Redirect to Google Form": {
+            "main": [
+                []
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Extract JSON",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Structured Output Parser": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "Extract JSON",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If: Was an error detected?": {
+            "main": [
+                [
+                    {
+                        "node": "Set Fields: Define Outcome",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Error Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Fields: Define Outcome": {
+            "main": [
+                [
+                    {
+                        "node": "Extract JSON",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Questions for API call": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Items",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/5631-transform-youtube-videos-into-interactive-mcq-quizzes-with-google-forms-and-gemini/",
+    "_scraped_at": "2026-05-07"
+}

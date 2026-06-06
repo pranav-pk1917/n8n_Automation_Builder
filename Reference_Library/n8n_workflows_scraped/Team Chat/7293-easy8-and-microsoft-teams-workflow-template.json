@@ -1,0 +1,270 @@
+{
+    "id": "XXXXXXXXXX",
+    "meta": {
+        "instanceId": "abcd12341234abcd123412345abcde"
+    },
+    "name": "Daily Easy8 Task Digest to Microsoft Teams Channel",
+    "tags": [],
+    "nodes": [
+        {
+            "id": "d6c38c13-98b8-49f8-8bea-eecb05ffe028",
+            "name": "Daily Trigger (8:30 work-days)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [
+                832,
+                208
+            ],
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "weeks",
+                            "triggerAtDay": [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5
+                            ],
+                            "triggerAtHour": 8,
+                            "triggerAtMinute": 30
+                        }
+                    ]
+                }
+            },
+            "typeVersion": 1.2
+        },
+        {
+            "id": "ace302ec-d8f4-441d-b528-4bb24807d004",
+            "name": "Split Out Issues",
+            "type": "n8n-nodes-base.splitOut",
+            "position": [
+                1328,
+                208
+            ],
+            "parameters": {
+                "options": {},
+                "fieldToSplitOut": "issues"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "c624c4df-a9b8-49ad-9a4c-5e9716d200fa",
+            "name": "Keep Relevant Fields & Add Link",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                1552,
+                208
+            ],
+            "parameters": {
+                "options": {},
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "48f456af-93c0-47be-bf25-8bd3dff5a42e",
+                            "name": "id",
+                            "type": "number",
+                            "value": "={{ $json.id }}"
+                        },
+                        {
+                            "id": "3f02bc20-d310-40a5-85b2-81fe1e535c07",
+                            "name": "subject",
+                            "type": "string",
+                            "value": "={{ $json.subject }}"
+                        },
+                        {
+                            "id": "9869f590-352b-433a-adeb-deb5d36ad1e5",
+                            "name": "author.name",
+                            "type": "string",
+                            "value": "={{ $json.author.name }}"
+                        },
+                        {
+                            "id": "838ad7d9-05e1-4be7-b359-4805740c2a9c",
+                            "name": "description",
+                            "type": "string",
+                            "value": "={{ $json.description }}"
+                        },
+                        {
+                            "id": "124b94db-506d-4312-a802-694c22a88bc5",
+                            "name": "link",
+                            "type": "string",
+                            "value": "=https://your-easy8-domain.com/issues/{{ $json.id }}"
+                        }
+                    ]
+                }
+            },
+            "typeVersion": 3.4
+        },
+        {
+            "id": "819e6565-9185-4f27-a16a-a6ec2c1024b6",
+            "name": "Message into Team Channel",
+            "type": "n8n-nodes-base.microsoftTeams",
+            "position": [
+                2160,
+                224
+            ],
+            "webhookId": "abcd1234-1234-abcd-1234-abcd1234",
+            "parameters": {
+                "chatId": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "YOUR_CHAT_ID",
+                    "cachedResultName": "Your Team"
+                },
+                "message": "=Name: <b>{{ $json.subject }}</b><br>Link: <a href=\"{{ $json.link }}\">{{ $json.id }}</a><br>Author: <b>{{ $json.author.name }}</b><br>Description:<br>{{ $json.description }}",
+                "options": {},
+                "resource": "chatMessage",
+                "contentType": "html"
+            },
+            "typeVersion": 2
+        },
+        {
+            "id": "94f38bba-2036-4765-81e1-ef031a1001e4",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                768,
+                0
+            ],
+            "parameters": {
+                "color": 7,
+                "width": 1600,
+                "height": 480,
+                "content": "## Call for issues in Easy8 & send relevant information to MS teams channel\n**1) GET issues by query via \"Easy8 node\"** - receive all issues corresponding to saved filter in Easy8 [(Read more about Easy8 filters)](https://www.easy8.com/documentation-of-easy8/article/filters-1-0)\n**2) \"Split out\" issues array** - to work with separate issues as single items\n**3) \"Edit fields\" - keep relevant data & add URL to issue** - keep only issue id, subject, author, description, and create URL link to issue\n**4) \"Loop over items\" - send one issue at the time**\n**5) Send the message via \"MS Teams node\"** - use technical user & select relevant teams channel or chat "
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "772cdf43-abbb-4da8-bfef-2d104c82d531",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                2432,
+                0
+            ],
+            "parameters": {
+                "width": 340,
+                "height": 480,
+                "content": "## Final Output\n### Received in teams chat \nName: **Client ABC - request consulting help**\nLink: [1354](https://your-easy8-domain.com/issues/1354) \n Author: **Jane Doe** \n\n Description:\n\n Service Request for consulting help: The necessary help including initiation of service delivery until the end of week. Client requested support with data migration and configuration of project modules including roles and permissions set-up. \n \n"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "335cc65a-6ebd-4563-9a8e-9f6574569dd2",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                0,
+                0
+            ],
+            "parameters": {
+                "width": 700,
+                "height": 1024,
+                "content": "## Daily Team Task Digest to MS Teams \n**Try out using a native Easy8 node to get issues according saved filter and send them to your MS Teams Channel.**\n\n### About Workflow\nThis workflow automatically collects newly assigned tasks for a specific team and posts them into a Microsoft Teams channel each morning.\n\n### Use Case \nAny team working with issues in Easy8 can benefit from automatic summary send to Teams - making sure all issues are addressed in time & saving time on meeting preparation without any copy pasting and no obsolete data.\n\n\n### How it works\n- Scheduled trigger will ensure the automatic run \n=> every work-day at 8:30\n- Easy8 node will GET all the issues by saved filter\n=> Issues | Get Many | Query Name or ID\n-  The filter is saved in Easy8 and assures all relevant issues are received\n=> Assignee is \"Consulting Team\" | Status is \"Open\" | Updated within \"last 3 days\"\n- Split out received data\n=> Output response is **one item**, which contains all received issues\n=> Split array \"issues\" to have 1 issue per item\n- Edit fields - keep only relevant data, adjust description, create URL link \n=> Fields: ID | Author | Subject | Description | URL Link\n=> URL link: Add expression https://your-easy8-domain.com/issues/{{issue ID}} to create a link to the issue  \n- Loop over items - send one message per issue\n- Send to MS Teams - by native MS Teams node\n=> Chat Message | Create | Selected Channel | HTML content\n=> HTML content mapped from edit fields node\n\n### How to use\n- Adjust the set-up to your team's need\n- Use your preffered filter and teams chat\n- Fetch open tasks assigned to a selected group or role.\n- Use the workflow for multiple teams\n- Adjust trigger for different intervals\n\n### Requirements \n- Easy8 application\n=> ideally technical user for API calls with specific permissions\n- MS Teams\n=> ideally technical user for API calls with specific permissions\n\n### Need Help? \n- Reach out through n8n community => https://community.n8n.io/u/easy8\n- Contant our team directly => https://www.easy8.com/ai-agency\n- Visit our youtube channel => https://www.youtube.com/@Easy8Group\n"
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "474799fb-a549-4fd8-8eaa-3a16d5b772f6",
+            "name": "Run for Each Task",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                1792,
+                208
+            ],
+            "parameters": {
+                "options": {}
+            },
+            "typeVersion": 3
+        },
+        {
+            "id": "44f73a61-c0a9-47d4-a441-39e7ab210e92",
+            "name": "Get Issues by Query1",
+            "type": "@easy8/n8n-nodes-easy8.easy8",
+            "position": [
+                1088,
+                208
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        }
+    ],
+    "active": false,
+    "pinData": {},
+    "settings": {
+        "binaryMode": "separate",
+        "executionOrder": "v1"
+    },
+    "versionId": "abcd1234-1234-abcd-1234-12345abcde",
+    "connections": {
+        "Split Out Issues": {
+            "main": [
+                [
+                    {
+                        "node": "Keep Relevant Fields & Add Link",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Run for Each Task": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Message into Team Channel",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Issues by Query1": {
+            "main": [
+                [
+                    {
+                        "node": "Split Out Issues",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Message into Team Channel": {
+            "main": [
+                [
+                    {
+                        "node": "Run for Each Task",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Daily Trigger (8:30 work-days)": {
+            "main": [
+                [
+                    {
+                        "node": "Get Issues by Query1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Keep Relevant Fields & Add Link": {
+            "main": [
+                [
+                    {
+                        "node": "Run for Each Task",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/7293-easy8-and-microsoft-teams-workflow-template/",
+    "_scraped_at": "2026-05-07"
+}

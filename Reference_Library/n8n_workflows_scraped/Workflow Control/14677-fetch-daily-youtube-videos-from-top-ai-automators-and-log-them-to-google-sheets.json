@@ -1,0 +1,591 @@
+{
+    "meta": {
+        "instanceId": "cf89b22246c0378b9142c316638ec26ffcd1aa0965b2926fcf45c954dfeda753",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "06521c47-d838-462a-9921-f28afe0e3b2e",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1632,
+                1904
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "9e4d740c-41ea-4b68-838f-4ee77c880f3d",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                2192,
+                2672
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "104c0601-98d4-4107-a3c5-06c7afb85fa4",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                2992,
+                1904
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "8c2f06fd-bcf3-43f2-89c5-27ce83963cbc",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3264,
+                2560
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "33dbfd26-b79b-4b61-8494-e8c3d4703629",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3536,
+                2720
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "7e2796b9-9551-400e-8250-9d225f6a90b9",
+            "name": "Sticky Note5",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                4432,
+                2768
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "3ebf9b49-a234-4b7e-9e59-cb38c9b8981d",
+            "name": "Sticky Note6",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                4704,
+                2768
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "71248d39-e32c-468f-a7cc-9d7de41a4c89",
+            "name": "Sticky Note7",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                4976,
+                2768
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "6b174553-6c3d-4a1f-9bee-bc1fb2aaeddd",
+            "name": "Read Rows in Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                3584,
+                3024
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "df4b7ecf-7b64-4b3f-a135-c26ca411c4db",
+            "name": "Deduplicate by All Fields",
+            "type": "n8n-nodes-base.removeDuplicates",
+            "position": [
+                3808,
+                3024
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "8704f6f7-87f3-4ebf-8cd3-d8f481daf60b",
+            "name": "Execute Custom Code",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                4032,
+                3024
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "2cfae264-3748-4ff0-a203-d97771a95964",
+            "name": "Set Existing Video IDs",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                4256,
+                3024
+            ],
+            "parameters": {},
+            "typeVersion": 3.4
+        },
+        {
+            "id": "6467d374-3392-4e09-85d6-769e6a995cbb",
+            "name": "Set New Video IDs",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                4256,
+                2832
+            ],
+            "parameters": {},
+            "typeVersion": 3.4
+        },
+        {
+            "id": "fb60b42b-1735-4b81-a19b-854bf5d1612b",
+            "name": "Merge Video ID Sets",
+            "type": "n8n-nodes-base.merge",
+            "position": [
+                4480,
+                2928
+            ],
+            "parameters": {},
+            "typeVersion": 3.2
+        },
+        {
+            "id": "09a42a7d-e2e2-4939-a231-3755de0ac927",
+            "name": "Append Rows to Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                5024,
+                2928
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "6d6f30df-342f-4565-aee2-e838654d46a7",
+            "name": "Process Merged Data",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                4752,
+                2928
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "3d72a172-df8b-40f4-a8e7-dbb993b73ebf",
+            "name": "Fetch Nate Herk Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                2064
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "6f3478c0-ad48-4a4a-a3d4-b7932b4ed7c7",
+            "name": "Fetch Nick Saraev Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                2256
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "c7a015a1-42cf-4b5d-a6c1-5fc498113a50",
+            "name": "Fetch Jack Roberts Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                2448
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "f6e7e78f-9575-4e47-899f-bf5fb7ae6ffe",
+            "name": "Fetch Cole Medin Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                2640
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "c42c0923-f644-4d97-9f92-8dd0788622e9",
+            "name": "Fetch Nick Puru Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                2832
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "637b54a0-5cee-4043-92d6-4c7a384927f3",
+            "name": "Fetch Ed Hill Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                3024
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "07baffd5-7b56-4c80-a870-9ec968497b0c",
+            "name": "Fetch Jason Cooperson Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                3184
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "ba97f5ae-28fe-4ccf-9447-09c006d8374f",
+            "name": "Fetch Manthan Patel Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                3376
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "05c29961-7b25-4de9-b286-e10f02a18619",
+            "name": "Combine Video Lists",
+            "type": "n8n-nodes-base.merge",
+            "position": [
+                3312,
+                2720
+            ],
+            "parameters": {},
+            "typeVersion": 3.2
+        },
+        {
+            "id": "72154a00-835d-4522-94ec-0c9b3dae8910",
+            "name": "Scheduled Daily Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [
+                2240,
+                2912
+            ],
+            "parameters": {},
+            "typeVersion": 1.3
+        },
+        {
+            "id": "a661ae8b-d8e6-4a9b-ace2-392fa12b1256",
+            "name": "Fetch Nick Daily Videos",
+            "type": "n8n-nodes-base.youTube",
+            "position": [
+                3040,
+                3536
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "09065ad3-9b85-4ee8-8e4a-454bc68bad96",
+            "name": "Set Scheduled Date Field",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                2624,
+                2800
+            ],
+            "parameters": {},
+            "typeVersion": 3.4
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Set New Video IDs": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Video ID Sets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Combine Video Lists": {
+            "main": [
+                [
+                    {
+                        "node": "Read Rows in Sheets",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Set New Video IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Execute Custom Code": {
+            "main": [
+                [
+                    {
+                        "node": "Set Existing Video IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Merge Video ID Sets": {
+            "main": [
+                [
+                    {
+                        "node": "Process Merged Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process Merged Data": {
+            "main": [
+                [
+                    {
+                        "node": "Append Rows to Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Rows in Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Deduplicate by All Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Ed Hill Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 5
+                    }
+                ]
+            ]
+        },
+        "Fetch Nate Herk Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Nick Puru Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 4
+                    }
+                ]
+            ]
+        },
+        "Set Existing Video IDs": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Video ID Sets",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Fetch Cole Medin Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 3
+                    }
+                ]
+            ]
+        },
+        "Fetch Nick Daily Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 9
+                    }
+                ]
+            ]
+        },
+        "Scheduled Daily Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Set Scheduled Date Field",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Nick Saraev Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Set Scheduled Date Field": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Nate Herk Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Nick Saraev Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Jack Roberts Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Cole Medin Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Nick Puru Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Ed Hill Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Jason Cooperson Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Manthan Patel Videos",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Nick Daily Videos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Deduplicate by All Fields": {
+            "main": [
+                [
+                    {
+                        "node": "Execute Custom Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Jack Roberts Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 2
+                    }
+                ]
+            ]
+        },
+        "Fetch Manthan Patel Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 8
+                    }
+                ]
+            ]
+        },
+        "Fetch Jason Cooperson Videos": {
+            "main": [
+                [
+                    {
+                        "node": "Combine Video Lists",
+                        "type": "main",
+                        "index": 7
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/14677-fetch-daily-youtube-videos-from-top-ai-automators-and-log-them-to-google-sheets/",
+    "_scraped_at": "2026-05-07"
+}

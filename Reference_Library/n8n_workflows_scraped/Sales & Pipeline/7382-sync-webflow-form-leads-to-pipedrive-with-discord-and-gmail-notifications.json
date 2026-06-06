@@ -1,0 +1,514 @@
+{
+    "meta": {
+        "instanceId": "393ca9e36a1f81b0f643c72792946a5fe5e49eb4864181ba4032e5a408278263",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "684b0cc3-cb8f-4b6d-9bcb-5463ec1cec67",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                80,
+                -208
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "79ce1068-c71d-4f60-886d-0a01e8122ed8",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                640,
+                32
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "3d9918c4-90c3-4811-89de-da1e3186dd76",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3328,
+                -80
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "c4f790fb-a290-4ff8-bd41-d1ab7d3846a3",
+            "name": "Sticky Note5",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3600,
+                160
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "d07c7f46-6219-46cf-a3aa-67920ce0b61e",
+            "name": "Sticky Note6",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3920,
+                160
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "c284e6d4-8033-4910-8119-38bd1bd507cb",
+            "name": "Sticky Note7",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                3728,
+                -208
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "2f34097f-56d3-4b2c-b380-5d227e612737",
+            "name": "Set Contact Fields",
+            "type": "n8n-nodes-base.set",
+            "position": [
+                912,
+                192
+            ],
+            "parameters": {},
+            "typeVersion": 3.4
+        },
+        {
+            "id": "4b2b8dc5-ceed-4756-915e-eacb8efda018",
+            "name": "Search Organization in Pipedrive",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                1328,
+                192
+            ],
+            "parameters": {},
+            "typeVersion": 1,
+            "alwaysOutputData": true
+        },
+        {
+            "id": "ae23f748-54f5-4958-8e0b-d40459f890b6",
+            "name": "If Organization Exists",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                1568,
+                192
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "58f36340-c6cf-4acc-a746-4d685fc6db05",
+            "name": "Format Phone Numbers",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                1104,
+                192
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "9c3bf303-0caf-42aa-bef5-b63e4b810cfb",
+            "name": "Create Organization in Pipedrive",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                1792,
+                272
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "428edc65-05e3-4543-88ef-85e4a1ac3b62",
+            "name": "Search Person in Pipedrive",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                2256,
+                176
+            ],
+            "parameters": {},
+            "executeOnce": false,
+            "typeVersion": 1,
+            "alwaysOutputData": true
+        },
+        {
+            "id": "3dbe0a71-350d-4c59-9e23-c79cbf04b1c5",
+            "name": "If Person Exists",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                2464,
+                176
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "12bafadd-779f-4e02-8bcf-a1de29888ea9",
+            "name": "Update Person in Pipedrive",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                2784,
+                80
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "5ad2a55f-8a59-4ae9-b820-ce6ea71a1c14",
+            "name": "Create Person in Pipedrive",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                2784,
+                256
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "ae575089-73cc-4a09-88c3-cf189bc38a9c",
+            "name": "Aggregate Organization Data",
+            "type": "n8n-nodes-base.aggregate",
+            "position": [
+                2000,
+                176
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "7e10c230-4996-474c-be2b-ee2d13a8900e",
+            "name": "Aggregate Person Data",
+            "type": "n8n-nodes-base.aggregate",
+            "position": [
+                3136,
+                176
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "b8442b2a-c804-495b-99c4-c0731885a139",
+            "name": "Notify Team on Discord",
+            "type": "n8n-nodes-base.discord",
+            "position": [
+                3648,
+                368
+            ],
+            "webhookId": "c8b277a4-ce7e-455e-9ed7-b207426dc7f4",
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "474fe5ef-aabd-4a59-8d86-48f68eb271a8",
+            "name": "Create Lead in Pipedrive",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                3376,
+                176
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "18debd0c-0cc9-449b-be36-50a7c8d3f516",
+            "name": "Update Organization URL",
+            "type": "n8n-nodes-base.pipedrive",
+            "position": [
+                3968,
+                -32
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "1bae99d5-d62e-408d-abcf-ac0e93aa74f2",
+            "name": "When Webflow Form Submitted",
+            "type": "n8n-nodes-base.webflowTrigger",
+            "position": [
+                688,
+                192
+            ],
+            "webhookId": "53bcc9fa-3e52-451e-800d-8c747b173ff9",
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "a16aaa01-ced0-4a03-a274-ca3287802de7",
+            "name": "Send Confirmation Email",
+            "type": "n8n-nodes-base.gmail",
+            "position": [
+                3968,
+                368
+            ],
+            "webhookId": "7fd0360d-92d4-4882-ad34-1d09ec5479fb",
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "eb36bef4-6648-40d9-93d1-139f9ecd0b07",
+            "name": "Filter Valid Organization URL",
+            "type": "n8n-nodes-base.filter",
+            "position": [
+                3776,
+                -32
+            ],
+            "parameters": {},
+            "typeVersion": 2.3
+        },
+        {
+            "id": "0289b672-746e-4624-8805-d7b5a401111d",
+            "name": "Sticky Note8",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1280,
+                16
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "cf4d0afd-a997-44e7-8e99-8b3967e51b45",
+            "name": "Sticky Note9",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                2208,
+                -48
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "02787c65-42e1-4ae5-a8cb-eac0360aa16d",
+            "name": "Sticky Note13",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1696,
+                -512
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "7b77025f-5fc0-4d3c-ba93-f768eb34320c",
+            "name": "Sticky Note16",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1696,
+                -928
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "If Person Exists": {
+            "main": [
+                [
+                    {
+                        "node": "Update Person in Pipedrive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Create Person in Pipedrive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Contact Fields": {
+            "main": [
+                [
+                    {
+                        "node": "Format Phone Numbers",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Phone Numbers": {
+            "main": [
+                [
+                    {
+                        "node": "Search Organization in Pipedrive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Person Data": {
+            "main": [
+                [
+                    {
+                        "node": "Create Lead in Pipedrive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If Organization Exists": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Organization Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Create Organization in Pipedrive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Lead in Pipedrive": {
+            "main": [
+                [
+                    {
+                        "node": "Notify Team on Discord",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Send Confirmation Email",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Filter Valid Organization URL",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Person in Pipedrive": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Person Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Search Person in Pipedrive": {
+            "main": [
+                [
+                    {
+                        "node": "If Person Exists",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Person in Pipedrive": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Person Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Organization Data": {
+            "main": [
+                [
+                    {
+                        "node": "Search Person in Pipedrive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "When Webflow Form Submitted": {
+            "main": [
+                [
+                    {
+                        "node": "Set Contact Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Valid Organization URL": {
+            "main": [
+                [
+                    {
+                        "node": "Update Organization URL",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Organization in Pipedrive": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Organization Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Search Organization in Pipedrive": {
+            "main": [
+                [
+                    {
+                        "node": "If Organization Exists",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/7382-sync-webflow-form-leads-to-pipedrive-with-discord-and-gmail-notifications/",
+    "_scraped_at": "2026-05-07"
+}

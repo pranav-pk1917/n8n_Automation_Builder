@@ -1,0 +1,970 @@
+{
+    "meta": {
+        "instanceId": "393ca9e36a1f81b0f643c72792946a5fe5e49eb4864181ba4032e5a408278263",
+        "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+        {
+            "id": "68177ce7-99bc-4720-a278-f43aa58663da",
+            "name": "Sticky Note1",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -480,
+                1168
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "b9037dfa-8e2a-4f7e-99af-e587df12bcd7",
+            "name": "Sticky Note2",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -80,
+                1200
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "abd01e59-4634-4ed2-9d89-1c11694b01d7",
+            "name": "Sticky Note3",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                320,
+                1200
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "208f1f27-2042-4aa8-a061-66d7fb576ffc",
+            "name": "Sticky Note4",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                432,
+                1568
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "a280384f-ec50-4760-ab10-080a3b941892",
+            "name": "Fetch BOAMP Tenders from API",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                144,
+                1376
+            ],
+            "parameters": {},
+            "typeVersion": 4.2
+        },
+        {
+            "id": "d2056c35-08d7-4696-98fa-70615641b1f6",
+            "name": "Extract Pagination Info",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                480,
+                1760
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "76f4592f-479c-42d7-a1f4-974a1f6df5d1",
+            "name": "If More Pages Exist",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                864,
+                1760
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "d6e53028-d0e3-4d9e-96e3-5ddfe381cecc",
+            "name": "Append Tenders to All Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                768,
+                1360
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "9111e8fc-a1a7-4cd5-bb98-5fc0845434e8",
+            "name": "Format Raw Tender Data",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                560,
+                1360
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "55872a6f-46cc-4311-8b8f-5383ea817038",
+            "name": "Read Offset from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -32,
+                1376
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "e6de420c-878e-4db9-8fc4-f66dd110ba40",
+            "name": "Wait 3 Seconds",
+            "type": "n8n-nodes-base.wait",
+            "position": [
+                1072,
+                1888
+            ],
+            "webhookId": "63dee3e9-695f-42dc-8689-6ef472d8f0d3",
+            "parameters": {},
+            "typeVersion": 1.1
+        },
+        {
+            "id": "9909f762-c840-4e47-acac-7b6183637afa",
+            "name": "Reset Offset in Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                1072,
+                1744
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "95905c81-3e41-4d8c-afcd-92a148658da6",
+            "name": "Update Offset in Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                688,
+                1760
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "af344e69-bb4b-4b2e-b2df-0e38f79588ac",
+            "name": "Read Config from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -256,
+                1376
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "91e40857-e29b-4911-a89b-ff1336952724",
+            "name": "Every Week at 10am",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [
+                -432,
+                1376
+            ],
+            "parameters": {},
+            "typeVersion": 1.2
+        },
+        {
+            "id": "5d2fe34e-47c7-4a98-8fb0-a967d246c10e",
+            "name": "Filter Tenders by Config Type",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                368,
+                1376
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "3a7a0b2f-db97-438b-bf1f-04ec12bc217c",
+            "name": "Sticky Note5",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1376,
+                2096
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "7bccc784-acc8-465c-ad1c-4d1ef39060aa",
+            "name": "Read All Offers from Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -32,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "1e18d56a-87a5-4ac6-bad8-93d8626312bd",
+            "name": "If Query Matches Offer",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                1424,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "689c2200-66fd-4025-bbe1-8d8c2508b977",
+            "name": "Loop Over Offers in Batches",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                368,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 3
+        },
+        {
+            "id": "d7393152-0b52-4b2e-a538-77ebeaf0d028",
+            "name": "Build Keyword Search Query",
+            "type": "n8n-nodes-base.code",
+            "position": [
+                1040,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 2
+        },
+        {
+            "id": "d705498a-4d4d-4abe-ae9e-50bdc3eb30d5",
+            "name": "Append Offer to Target Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                1616,
+                2256
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "e30fd655-fbb4-48e5-9808-56b0ffb21402",
+            "name": "Fetch Offer Page",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                608,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 4.2
+        },
+        {
+            "id": "d2fc3986-a604-48f6-afbc-beead6a44817",
+            "name": "Extract Offer Content",
+            "type": "n8n-nodes-base.extractFromFile",
+            "position": [
+                816,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "da06e353-06b5-4563-baf8-78e7d394d36f",
+            "name": "Filter Unprocessed Offers",
+            "type": "n8n-nodes-base.filter",
+            "position": [
+                144,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 2.2
+        },
+        {
+            "id": "addc4cc7-e2d4-4da3-9500-fa878a8492b1",
+            "name": "Mark Offer as Processed",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                1200,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "cca7e9e6-d91a-4959-8812-e25ccd4ab6ce",
+            "name": "Read Keywords from Config",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -256,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "71f79d10-f6b8-4bed-9822-ea280db678da",
+            "name": "Every Week at Noon",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [
+                -432,
+                2320
+            ],
+            "parameters": {},
+            "typeVersion": 1.2
+        },
+        {
+            "id": "8c849282-0f33-4bfc-8faa-84808252b69b",
+            "name": "Sticky Note6",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1040,
+                2096
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "4591a280-add1-465d-8686-f7a476b4b6bd",
+            "name": "Sticky Note7",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -480,
+                2144
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "145c7e39-b161-4786-a42e-1b465f76074a",
+            "name": "Sticky Note8",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -80,
+                2160
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "33f3e0eb-66e8-43c4-ae9a-6f939fc06dbc",
+            "name": "Sticky Note9",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                320,
+                2160
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "70ab33e1-01f2-4b9a-954b-f74d19d39570",
+            "name": "Sticky Note10",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                992,
+                2144
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "36e52c0f-f056-452a-896a-308786c89fdf",
+            "name": "Wait 3 Seconds1",
+            "type": "n8n-nodes-base.wait",
+            "position": [
+                1856,
+                2336
+            ],
+            "webhookId": "8dfc6b2f-d2e9-49db-952b-98e1ee306b4c",
+            "parameters": {},
+            "typeVersion": 1.1
+        },
+        {
+            "id": "e6b2f00f-0fc7-48fe-a2fc-93f69fb3e8ed",
+            "name": "Every Week at 6pm",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [
+                -432,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 1.2
+        },
+        {
+            "id": "78f0da6e-cbbd-4019-9b6c-e87d2540a60b",
+            "name": "Read Targets from Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                -224,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "f51c5f7c-d7ec-4497-a62e-be62cc50f654",
+            "name": "Loop Over Targets",
+            "type": "n8n-nodes-base.splitInBatches",
+            "position": [
+                -16,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 3
+        },
+        {
+            "id": "fbbaafa2-1088-4487-9863-f437d630679a",
+            "name": "Fetch Target URL Content",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [
+                224,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 4.2
+        },
+        {
+            "id": "ca71bfb3-9f69-4f87-a4bd-fd35c0f1f4ff",
+            "name": "Extract Text from File",
+            "type": "n8n-nodes-base.extractFromFile",
+            "position": [
+                432,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 1
+        },
+        {
+            "id": "e298fca4-c90c-4639-a147-d2bf9d9f2b95",
+            "name": "Content Analysis Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "position": [
+                672,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 3.1
+        },
+        {
+            "id": "97fbddd6-7ab9-4508-9875-bdaf4b080cf5",
+            "name": "Update Target Row in Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                1056,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "36d87e80-7615-4ae2-9c49-39ad2918b8f0",
+            "name": "Append Match to Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "position": [
+                1264,
+                3200
+            ],
+            "parameters": {},
+            "typeVersion": 4.7
+        },
+        {
+            "id": "345d7f43-b8ab-4295-b997-08e6231a1677",
+            "name": "Parse Structured Output",
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "position": [
+                848,
+                3376
+            ],
+            "parameters": {},
+            "typeVersion": 1.3
+        },
+        {
+            "id": "089aa94b-8dbe-4a11-a083-be3a28eb6272",
+            "name": "Claude Sonnet Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+            "position": [
+                704,
+                3376
+            ],
+            "parameters": {},
+            "typeVersion": 1.3
+        },
+        {
+            "id": "691a0ec1-d38c-48b1-ad5a-009e418523b6",
+            "name": "Sticky Note11",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1040,
+                3024
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "3e50cdc3-438d-4f68-a0c8-a2e404f74569",
+            "name": "Sticky Note12",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -480,
+                3040
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "805d859d-98e0-4e35-b8fd-fac0f42d5654",
+            "name": "Sticky Note13",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                176,
+                3024
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "bd44efa6-eaf4-4bd6-af17-72259d50ad82",
+            "name": "Sticky Note14",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                624,
+                3024
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "33262cb0-50d4-48dd-8e1b-3cb65f1ab475",
+            "name": "Sticky Note15",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                1008,
+                3024
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        },
+        {
+            "id": "66502ead-ba3d-40dc-9d46-3e5411b812d4",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1040,
+                1136
+            ],
+            "parameters": {
+                "content": ""
+            },
+            "typeVersion": 1
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Wait 3 Seconds": {
+            "main": [
+                [
+                    {
+                        "node": "Read Offset from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait 3 Seconds1": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Offers in Batches",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Offer Page": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Offer Content",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Every Week at 6pm": {
+            "main": [
+                [
+                    {
+                        "node": "Read Targets from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over Targets": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Fetch Target URL Content",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Every Week at 10am": {
+            "main": [
+                [
+                    {
+                        "node": "Read Config from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Every Week at Noon": {
+            "main": [
+                [
+                    {
+                        "node": "Read Keywords from Config",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Claude Sonnet Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Content Analysis Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If More Pages Exist": {
+            "main": [
+                [
+                    {
+                        "node": "Reset Offset in Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Wait 3 Seconds",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Offer Content": {
+            "main": [
+                [
+                    {
+                        "node": "Build Keyword Search Query",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Append Match to Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Targets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Content Analysis Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Update Target Row in Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Text from File": {
+            "main": [
+                [
+                    {
+                        "node": "Content Analysis Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Raw Tender Data": {
+            "main": [
+                [
+                    {
+                        "node": "Append Tenders to All Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If Query Matches Offer": {
+            "main": [
+                [
+                    {
+                        "node": "Append Offer to Target Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Wait 3 Seconds1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Pagination Info": {
+            "main": [
+                [
+                    {
+                        "node": "Update Offset in Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Mark Offer as Processed": {
+            "main": [
+                [
+                    {
+                        "node": "If Query Matches Offer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Structured Output": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "Content Analysis Agent",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Config from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Read Offset from Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Offset from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch BOAMP Tenders from API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Offset in Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "If More Pages Exist",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Target URL Content": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Text from File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Targets from Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Targets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Unprocessed Offers": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Offers in Batches",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read Keywords from Config": {
+            "main": [
+                [
+                    {
+                        "node": "Read All Offers from Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build Keyword Search Query": {
+            "main": [
+                [
+                    {
+                        "node": "Mark Offer as Processed",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read All Offers from Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "Filter Unprocessed Offers",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over Offers in Batches": {
+            "main": [
+                [],
+                [
+                    {
+                        "node": "Fetch Offer Page",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Target Row in Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Append Match to Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Append Offer to Target Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "Wait 3 Seconds1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch BOAMP Tenders from API": {
+            "main": [
+                [
+                    {
+                        "node": "Filter Tenders by Config Type",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filter Tenders by Config Type": {
+            "main": [
+                [
+                    {
+                        "node": "Format Raw Tender Data",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Extract Pagination Info",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "_source_url": "https://n8n.io/workflows/9315-boamp-tender-monitor-automated-public-procurement-qualification-with-ai/",
+    "_scraped_at": "2026-05-07"
+}
