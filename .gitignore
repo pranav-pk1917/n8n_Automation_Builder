@@ -75,3 +75,7 @@ data/
 # Backups
 *.bak
 *.backup
+
+# Subprojects (each has its own GitHub repo, managed independently)
+SEO-Tools/
+SEO-Titan-n8n-workflow/
