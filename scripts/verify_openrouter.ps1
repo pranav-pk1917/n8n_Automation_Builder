@@ -72,9 +72,9 @@ function Invoke-EmbeddingTest {
     }
 }
 
-Invoke-ChatTest      -Model "google/gemini-2.0-flash-001"       -Label "Primary LLM"
-Invoke-EmbeddingTest -Model "openai/text-embedding-3-small"     -Dims 768
-Invoke-ChatTest      -Model "openai/gpt-4o-mini"                -Label "Cross-validation LLM"
+Invoke-ChatTest      -Model "deepseek/deepseek-v4-flash"       -Label "Primary LLM"
+Invoke-EmbeddingTest -Model "qwen/qwen3-embedding-8b"     -Dims 768
+Invoke-ChatTest      -Model "xiaomi/mimo-v2.5"                -Label "Cross-validation LLM"
 
 Write-Host ""
 Write-Host "==============================" -ForegroundColor White

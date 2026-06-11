@@ -1,0 +1,3430 @@
+{
+  "name": "TitanV4_Template",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Workflow_Main",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=0"
+        },
+        "event": "rowUpdate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        2576,
+        64
+      ],
+      "id": "9601dcd0-af65-4f38-8bef-bcfa876a7448",
+      "name": "1. Trigger_Watch_Sheet3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "776982d5-b585-4f47-aa86-f4b98218cb81",
+              "name": "RowID",
+              "value": "={{ $json.RowID }}",
+              "type": "string"
+            },
+            {
+              "id": "80a2e2b8-9eef-4f4b-ad7a-ee086e56f058",
+              "name": "Status",
+              "value": "={{ $json.Status }}",
+              "type": "string"
+            },
+            {
+              "id": "9b8c46fb-e767-4e5c-8a69-8b6eb9fd464a",
+              "name": "PrimaryKeyword",
+              "value": "={{ $json.PrimaryKeyword }}",
+              "type": "string"
+            },
+            {
+              "id": "00d48368-6a64-4099-bb84-299fb1dd0562",
+              "name": "LSIKeywords",
+              "value": "={{ $json.LSIKeywords }}",
+              "type": "string"
+            },
+            {
+              "id": "d082fbd6-fdd1-4304-9348-50ddfd167fa2",
+              "name": "PillarParent",
+              "value": "={{ $json.PillarParent }}",
+              "type": "string"
+            },
+            {
+              "id": "1a1cf072-0c18-4006-b005-a471de8aa077",
+              "name": "ContentGap",
+              "value": "={{ $json.ContentGap }}",
+              "type": "string"
+            },
+            {
+              "id": "ba9158b9-0344-4d70-a104-d45a5d4b73bf",
+              "name": "SERP_Competitors",
+              "value": "={{ $json.SERP_Competitors }}",
+              "type": "string"
+            },
+            {
+              "id": "b45631b2-f165-4072-9524-904877d95c8a",
+              "name": "SuggestedMedia",
+              "value": "={{ $json.SuggestedMedia }}",
+              "type": "string"
+            },
+            {
+              "id": "456ddf1b-328d-4876-b093-13071a242efb",
+              "name": "SEOIntent",
+              "value": "={{ $json.SEOIntent }}",
+              "type": "string"
+            },
+            {
+              "id": "8e64d35e-acc3-4d62-a36f-7615a7c18bc6",
+              "name": "TargetAudience",
+              "value": "={{ $json.TargetAudience }}",
+              "type": "string"
+            },
+            {
+              "id": "e862b26c-541f-48e7-8441-e2d9e8aa29c0",
+              "name": "Visual_Style",
+              "value": "={{ $json.Visual_Style }}",
+              "type": "string"
+            },
+            {
+              "id": "f3d19b6e-5209-429d-841b-44b295041328",
+              "name": "Persona_Override",
+              "value": "={{ $json.Persona_Override }}",
+              "type": "string"
+            },
+            {
+              "id": "2454f640-2af9-4fca-9288-74ffaf79dcf9",
+              "name": "WP_URL",
+              "value": "={{ $json.WP_URL }}",
+              "type": "string"
+            },
+            {
+              "id": "9e250789-9973-48c4-9c3b-39be2b2f4067",
+              "name": "DatePublished",
+              "value": "={{ $json.DatePublished }}",
+              "type": "string"
+            },
+            {
+              "id": "69d42a1b-129f-49af-a2a8-cc30b6f3edab",
+              "name": "Lighthouse_Score",
+              "value": "={{ $json.Lighthouse_Score }}",
+              "type": "string"
+            },
+            {
+              "id": "1b3d9c2f-ecbb-480d-be18-a12274b14a9c",
+              "name": "MetaDescription",
+              "value": "={{ $json.MetaDescription }}",
+              "type": "string"
+            },
+            {
+              "id": "8a933eca-a373-4c89-a1de-841680e4f49d",
+              "name": "Tags",
+              "value": "={{ $json.Tags }}",
+              "type": "string"
+            },
+            {
+              "id": "c68890e5-5d2a-4845-9884-66aaca777d14",
+              "name": "FeaturedImage_URL",
+              "value": "={{ $json.FeaturedImage_URL }}",
+              "type": "string"
+            },
+            {
+              "id": "7ac36968-76d0-477c-8146-d827df68a439",
+              "name": "ReferenceImage_URL",
+              "value": "={{ $json.ReferenceImage_URL }}",
+              "type": "string"
+            },
+            {
+              "id": "7279a6f8-d06c-472d-999b-1ce46554cbcd",
+              "name": "Slug",
+              "value": "={{ $json.Slug }}",
+              "type": "string"
+            },
+            {
+              "id": "2534b040-fa2e-4a52-ad3e-418271b6811c",
+              "name": "WP_PostID",
+              "value": "={{ $json.WP_PostID }}",
+              "type": "string"
+            },
+            {
+              "id": "53df58fe-914e-4270-9555-cf09428f9602",
+              "name": "WP_PostStatus",
+              "value": "={{ $json.WP_PostStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "84feaeb9-0b36-413a-83f5-6da821dce08f",
+              "name": "row_number",
+              "value": "={{ $json.rowNumber }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2800,
+        64
+      ],
+      "id": "fd8ef350-bf07-4ea2-9452-dad4a4e9f11d",
+      "name": "2. Set_Clean_Variables3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4bb4a91f-4b8c-4efa-a0fb-5db539787996",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "start",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "f91429f1-fec8-48a3-972a-0289b0cf9180",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3024,
+        64
+      ],
+      "id": "4c2cc537-5325-429d-add3-735d6e36d221",
+      "name": "3. Gatekeeper_Check_Status3"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Workflow_Main",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "RowID",
+              "lookupValue": "={{ $json.RowID }}"
+            }
+          ]
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically",
+              "readRowsUntil": "firstEmptyRow"
+            }
+          },
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3248,
+        64
+      ],
+      "id": "f79e7cca-7a2c-46b4-8a13-ce37a9517408",
+      "name": "4. GPS_Find_Row_Number3"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Workflow_Main",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "RowID": "={{ $json.RowID }}",
+            "Status": "working"
+          },
+          "matchingColumns": [
+            "RowID"
+          ],
+          "schema": [
+            {
+              "id": "RowID",
+              "displayName": "RowID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PrimaryKeyword",
+              "displayName": "PrimaryKeyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "LSIKeywords",
+              "displayName": "LSIKeywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "PillarParent",
+              "displayName": "PillarParent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ContentGap",
+              "displayName": "ContentGap",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SERP_Competitors",
+              "displayName": "SERP_Competitors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SuggestedMedia",
+              "displayName": "SuggestedMedia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SEOIntent",
+              "displayName": "SEOIntent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "TargetAudience",
+              "displayName": "TargetAudience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Visual_Style",
+              "displayName": "Visual_Style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Persona_Override",
+              "displayName": "Persona_Override",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "WP_URL",
+              "displayName": "WP_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "DatePublished",
+              "displayName": "DatePublished",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Lighthouse_Score",
+              "displayName": "Lighthouse_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "MetaDescription",
+              "displayName": "MetaDescription",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Tags",
+              "displayName": "Tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "FeaturedImage_URL",
+              "displayName": "FeaturedImage_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ReferenceImage_URL",
+              "displayName": "ReferenceImage_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Slug",
+              "displayName": "Slug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "WP_PostID",
+              "displayName": "WP_PostID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "WP_PostStatus",
+              "displayName": "WP_PostStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3472,
+        64
+      ],
+      "id": "56ae9958-714c-43b9-850a-abf0fc9be3b1",
+      "name": "5. Lock_Row_Status3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.exa.ai/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"comprehensive deep dive guide about {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\",\n  \"numResults\": 3,\n  \"useAutoprompt\": true,\n  \"contents\": {\n    \"text\": true\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3696,
+        64
+      ],
+      "id": "d9a724ab-8c09-497f-beb4-2bf580a79fe6",
+      "name": "6. Research_Exa_AI3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1024,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"image\",\n          \"source\": {\n            \"type\": \"base64\",\n            \"media_type\": \"image/jpeg\",\n            \"data\": \"{{ $('7.5 Download_Thumbnail2').first().binary.data.data }}\"\n          }\n        },\n        {\n          \"type\": \"text\",\n          \"text\": \"Analyze the visual composition and key concepts of this image. Write a highly detailed image generation prompt for Flux.1 to create a 'Modern, Minimalist Vector Infographic' representing these same concepts. \\n\\nCRITICAL RULES:\\n1. The style MUST be flat vector art, isometric, clean white background.\\n2. NO TEXT inside the image (Flux struggles with text).\\n3. Describe the layout, colors, and objects. \\n4. Output ONLY the prompt string. Do not say 'Here is the prompt'.\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2864,
+        464
+      ],
+      "id": "9acbbfed-ab6c-4af3-81b0-09be191260b2",
+      "name": "8. Vision_Analyze_Image3"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('7. Search_Reference_Image3').item.json.images_results[0].thumbnail }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2560,
+        464
+      ],
+      "id": "260ea05d-2f32-4464-9785-1d73117316fa",
+      "name": "7.5 Download_Thumbnail2",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "operation": "google_images",
+        "q": "={{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }} infographic",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApi",
+      "typeVersion": 1,
+      "position": [
+        4032,
+        192
+      ],
+      "id": "472f4da2-bd00-4a49-9494-386eca9f54e1",
+      "name": "7. Search_Reference_Image3",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "url": "=https://api.replicate.com/v1/predictions/{{ $('9. Image generator3').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3984,
+        448
+      ],
+      "id": "087daed5-a4a8-44b5-9224-ba88b650016b",
+      "name": "11. Check_Image_Status2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "023c5dec-c969-4f0d-9388-3fd5e6840262",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4192,
+        608
+      ],
+      "id": "5ae019a5-228c-4356-b460-4c403cd0cfc1",
+      "name": "12. Is_Image_Ready?2"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3696,
+        432
+      ],
+      "id": "355b61a7-d16e-47ee-b124-34fdc0e94736",
+      "name": "10. Wait2",
+      "webhookId": "227d020e-b37a-449e-b11c-8118a522365a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {\n    \"prompt\": {{ JSON.stringify($json.output) }},\n    \"aspect_ratio\": \"16:9\",\n    \"output_format\": \"jpg\",\n    \"output_quality\": 90\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3456,
+        448
+      ],
+      "id": "2d222f38-7437-4e67-bf41-a01edf30eb79",
+      "name": "9. Image generator3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you are a prompt writer, you need to take this instruction {{ $json.content[0].text }} and only parse out the image prompt and nothing else, for example \"Modern minimalist vector infographic showing technical SEO concepts in flat isometric style, vertical composition on clean white background, ten distinct sections arranged vertically with icons and visual representations, color palette of sage green, warm beige, burnt orange and charcoal gray, geometric shapes representing: magnifying glass over website pages, robot crawler icon, speedometer gauge, mobile device with checkmark, data structure nodes connected by lines, markup code brackets symbol, padlock with shield, duplicate page documents with X mark, sitemap tree diagram, audit checklist with wrench tools, flat vector illustrations with long shadows, clean modern iconography, professional business style, no text labels, cohesive flow from top to bottom, subtle connecting lines between sections, rounded corners on containers, 2.5D isometric perspective, corporate tech aesthetic\".",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        3104,
+        432
+      ],
+      "id": "7b58a952-07c3-4d78-a03f-bb77ffaea58d",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        3104,
+        608
+      ],
+      "id": "d7e62d97-6f3e-43e1-88cc-2d907381b3ff",
+      "name": "DeepSeek Chat Model1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807196694,
+          "mode": "list",
+          "cachedResultName": "Pillar_Clusters",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=807196694"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Pillar_Topic",
+              "lookupValue": "={{ $('2. Set_Clean_Variables3').item.json.PillarParent }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2576,
+        864
+      ],
+      "id": "6a837325-f542-4599-a554-3e4eb555e585",
+      "name": "13. Get_Pillar_Data"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=123456789",
+          "mode": "list",
+          "cachedResultName": "Link_Index",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=123456789"
+        },
+        "options": {}
+      },
+      "id": "ef719c2a-ea56-4ade-950d-f5c1328404ef",
+      "name": "14. Get_Link_Index",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2800,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "if (items.length === 0) {\n  return { json: { link_list_text: \"No existing posts found.\" } };\n}\n\nconst links = items.map(item => {\n  return `- Topic: ${item.json.PrimaryKeyword} | URL: ${item.json.URL}`;\n}).join('\\n');\n\nreturn {\n  json: {\n    link_list_text: links\n  }\n};"
+      },
+      "id": "2a0b49f7-7275-4c14-80e5-a9c50e2c4029",
+      "name": "15. Format_Link_List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3024,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define personas\nconst personas = [\n  {\n    name: \"The Analyst\",\n    prompt: \"You are an analytical, data-driven SEO expert. Focus on facts, step-by-step logic, and technical accuracy. Use bullet points and clear headers. Avoid fluff.\"\n  },\n  {\n    name: \"The Storyteller\",\n    prompt: \"You are an engaging, narrative-driven writer. Use analogies, metaphors, and real-world examples to explain complex topics. Keep the tone conversational and empathetic.\"\n  },\n  {\n    name: \"The Contrarian\",\n    prompt: \"You are a bold, opinionated industry veteran. Challenge common misconceptions ('myths') and offer unique, unconventional advice. Don't be afraid to say what others won't.\"\n  }\n];\n\n// Random selection\nconst randomIndex = Math.floor(Math.random() * personas.length);\nlet selected = personas[randomIndex];\n\n// Check for Sheet Override\ntry {\n    // Note: We reference the Set Variables node by name\n    const override = $('2. Set_Clean_Variables3').item.json.Persona_Override;\n    if (override && override !== 'Random' && override !== '') {\n        const found = personas.find(p => p.name.includes(override));\n        if (found) selected = found;\n    }\n} catch (e) {}\n\nreturn {\n  json: {\n    persona_name: selected.name,\n    system_prompt: selected.prompt\n  }\n};"
+      },
+      "id": "8bbed20f-74ce-4c48-8e2a-7c3f08912235",
+      "name": "16. Pick_Persona",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-opus-4-6\",\n  \"max_tokens\": 2500,\n  \"system\": \"{{ $('16. Pick_Persona').item.json.system_prompt }}\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are an expert SEO Strategist. Create a detailed Blog Post Outline for the keyword: \\\"{{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\\\".\\n\\nCONTEXT:\\n- Target Audience: {{ $('2. Set_Clean_Variables3').item.json.TargetAudience }}\\n- SEO Intent: {{ $('2. Set_Clean_Variables3').item.json.SEOIntent }}\\n\\nSTRATEGIC REQUIREMENT (CRITICAL):\\nYou MUST plan a specific section to hyperlink to this Pillar Page: {{ $('13. Get_Pillar_Data').item.json.Pillar_URL }} (Topic: {{ $('13. Get_Pillar_Data').item.json.Pillar_Topic }}).\\n\\nRESEARCH SUMMARY:\\n{{ JSON.stringify($('6. Research_Exa_AI3').item.json.results) }}\\n\\nINSTRUCTIONS:\\n1. Create a comprehensive H2/H3 outline.\\n2. FIRST SECTION RULE (Critical): The first H2 must be titled to directly answer the primary keyword as a question. Example: if keyword is \\'best CRM for small business\\', first H2 should be \\'What Is the Best CRM for Small Business?\\' with a 2-3 sentence direct answer planned beneath it.\\n3. ANSWER-FIRST OPENING: Plan a 50-75 word introduction that directly answers the primary keyword question before any context or preamble. Mark it as [DIRECT ANSWER BLOCK].\\n4. PAA INTEGRATION: From the research data, identify 3-5 questions that appear as People Also Ask patterns. Plan these as FAQ sections within the outline.\\n5. CITATION ANCHORS: Mark at least 3 places in the outline where a named statistic from the research should be cited with its source. Mark as [CITE: source name].\\n6. Plan a specific section to hyperlink to this Pillar Page and mark exactly where the Internal Links should go.\\n7. Do NOT write the article yet, just the structure.\\n8. Output ONLY the outline in Markdown format.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "ad2842e8-8c0b-4703-a7a3-5c0c60e00373",
+      "name": "17. Generate_Outline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3472,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('11. Check_Image_Status2').item.json.output[0] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "9b7763d4-93ea-4126-be81-ca0e51947ade",
+      "name": "18. Download_Flux_Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3696,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('2. Set_Clean_Variables3').item.json.WP_URL }}/wp-json/wp/v2/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "=attachment; filename={{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword.replace(/ /g, \"-\") }}.jpg"
+            },
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "7ba50da9-4189-4686-bb8d-1b4758756070",
+      "name": "19. WP_Upload_Media_HTTP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3920,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 2500,\n  \"system\": \"You are a Technical SEO Expert. Your task is to generate valid JSON-LD Schema markup. Do NOT output any conversational text.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze the Research Data below and generate 3-5 high-value FAQs (People Also Ask) relevant to the keyword \\\"{{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\\\".\\n\\nRESEARCH DATA:\\n{{ JSON.stringify($('6. Research_Exa_AI3').item.json.results) }}\\n\\nINSTRUCTIONS:\\n1. From the Research Data below, extract the actual questions that appear in People Also Ask (PAA) sections, related questions, or are phrased as questions in the content.\\n2. If fewer than 3 PAA questions are found in the research, generate additional questions based on the keyword intent and research content.\\n3. Create answers based STRICTLY on the research data.\\n4. Include a 'mainEntity' reference to the Pillar Page URL inside the schema if relevant.\\n5. Format the output STRICTLY as a valid JSON-LD FAQPage script.\\n6. Do NOT include any markdown formatting.\\n7. Start with <script type=\\\"application/ld+json\\\"> and end with </script>.\\n8. Include 4-6 questions minimum.\"\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "72be998f-ec0b-4b5d-bfe5-5e9c48c3a5d3",
+      "name": "20. Generate_FAQ_Schema",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4528,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 500,\n  \"system\": \"You are a Technical SEO Expert. Generate valid JSON-LD Article schema markup. Output ONLY the raw script tag with no markdown or commentary.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate Article JSON-LD schema for this content:\\n\\nPrimary Keyword: {{ $(\\'2. Set_Clean_Variables3\\').item.json.PrimaryKeyword }}\\nSite URL: {{ $(\\'2. Set_Clean_Variables3\\').item.json.WP_URL }}\\nDate: {{ new Date().toISOString().split(\\'T\\')[0] }}\\n\\nINSTRUCTIONS:\\n1. Output ONLY a valid JSON-LD Article schema\\n2. Start with <script type=\\\\\\\"application/ld+json\\\\\\\">\\n3. End with </script>\\n4. Include: @type Article, headline (from keyword), datePublished (today), dateModified (today), publisher with @type Organization and name from the site URL domain\\n5. Do NOT include author (will be set per client)\\n6. No markdown, no commentary\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4528,
+        1024
+      ],
+      "id": "385b1bf2-cdd1-45cd-889e-30ade9488ae5",
+      "name": "20b. Generate_Article_Schema"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-opus-4-6\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are a world-class SEO content writer. Your task is to take a detailed outline, research data, and internal linking instructions to generate a comprehensive, long-form blog post. Output must be in raw, ready-to-publish HTML format.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"**Persona:** {{ $('16. Pick_Persona').item.json.persona_name }}\\n**Primary Keyword:** {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\\n**Pillar Link:** {{ $('13. Get_Pillar_Data').item.json.Pillar_URL }} (Topic: {{ $('13. Get_Pillar_Data').item.json.Pillar_Topic }})\\n**Internal Link Index:** {{ $('15. Format_Link_List').item.json.link_list_text }}\\n\\n**RESEARCH DATA:**\\n{{ JSON.stringify($('6. Research_Exa_AI3').item.json.results) }}\\n\\n**OUTLINE:**\\n{{ $('17. Generate_Outline').item.json.content[0].text }}\\n\\n**INSTRUCTIONS (CRITICAL):**\\n1. Expand the outline into a full article (1,800+ words) using proper WordPress-compatible HTML.\\n2. Use H2, H3, and H4 tags. Use appropriate line breaks and paragraph tags.\\n3. ANSWER-FIRST RULE: The opening paragraph (before the first H2) must be 50-75 words that directly answer the primary keyword. Start with a declarative sentence. No fluff, no 'In this article we will...' preamble.\\n4. CITATION RULE: Every statistic must be attributed to a named source using this format: 'According to [Source Name], [stat].' Do not use vague phrases like 'studies show' or 'research indicates' without a named source from the research data.\\n5. FAQ ANCHOR: Include a dedicated FAQ section near the end using <h2>Frequently Asked Questions</h2> with the PAA questions identified in the outline. Format each as <h3>Question?</h3><p>Answer.</p>\\n6. Maintain the **Persona's** tone throughout.\\n7. Integrate the **Pillar Link** and **Internal Links** exactly where the Outline indicated them.\\n8. Output ONLY the raw HTML content, beginning with <h2>.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "2f0d10a4-304b-42b1-9565-16c420dafb2f",
+      "name": "21. Write_Full_Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2480,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-opus-4-6\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are an elite SEO copywriter who writes in the style of Brian Dean (Backlinko). Your goal is to produce people-first, high-clarity, highly actionable content that can rank because it is genuinely useful.\\n\\n### CORE WRITING VOICE (The 'Brian Dean' Method):\\n1. **Bucket Brigades:** Use short, conversational bridges to keep people reading. (e.g., 'Here is the truth:', 'But there is a catch:', 'Why does this matter?').\\n2. **Burstiness (Readable, Not Chaotic):** Vary sentence length for natural rhythm, but keep clarity. Mix short punchy lines with longer explanatory sentences.\\n3. **Visual Formatting:** Use bullet points, bold text for emphasis (not just headers), and tables for data comparison.\\n4. **No Fluff:** If a sentence does not add new information, delete it. Avoid filler transitions like: 'Moreover', 'Furthermore', 'In conclusion', 'In the landscape of'.\\n\\n### HELPFUL, RELIABLE, PEOPLE-FIRST RULES (Non-negotiable):\\n1. **No fabricated experience:** Do NOT claim first-hand testing or personal experience unless the raw draft already contains verifiable, specific evidence (numbers, named tools, steps, context) AND it is clearly presented as factual. If the draft includes vague first-person claims (e.g., 'I tested this'), rewrite them into honest, neutral phrasing (e.g., 'A practical approach is...' or 'Many teams do...') without implying you personally tested it.\\n2. **No new facts:** Do NOT introduce new statistics, case studies, tool results, quotes, or factual claims that are not already present in the raw draft.\\n3. **Strengthen usefulness:** Convert vague advice into concrete steps, checklists, decision rules, and examples *only if* they are consistent with the existing draft content.\\n4. **Correct obvious issues:** If the draft contains contradictions, unclear steps, or missing prerequisites, fix clarity by tightening language and structure—without adding new facts.\\n\\n### SEO + STRUCTURE RULES:\\n1. **Intent satisfaction:** Make sure every major heading delivers a clear takeaway and actionable next step.\\n2. **Internal links & anchors:** Preserve all existing <a href> links and anchor text exactly. Do not add new links.\\n3. **HTML Strictness:** Preserve all <h2>, <h3>, and <a href> tags exactly as provided in the draft.\\n\\n### NEGATIVE CONSTRAINTS (Instant Fails):\\n- DO NOT mention AI detectors, undetectability, perplexity, or anything about bypassing detection.\\n- DO NOT use fancy vocabulary (e.g., 'tapestry', 'symphony', 'unleash', 'elevate'). Keep it 8th-grade reading level.\\n- DO NOT lecture the reader.\\n- Avoid passive voice where possible.\\n\\n### OUTPUT RULES:\\n- Output ONLY the refined HTML.\\n- Do NOT wrap in markdown.\\n- Do NOT include commentary, analysis, or explanations.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"**Raw Draft:**\\n{{ $json.content[0].text }}\\n\\n**Task:**\\nRewrite the content above using the 'Backlinko' style described in the system prompt. Improve clarity, specificity, and scannability. Output ONLY the refined HTML.\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "id": "65f93d83-1e2b-40e4-bff7-baface65f5a2",
+      "name": "22. Humanize_Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2752,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "content": "Replace this node woth ai agent and add articels written by BRain Dean from backlinko as sample",
+        "height": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        1200
+      ],
+      "id": "84d2e5e5-6e90-4831-92a6-90d77a2b8955",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1000,\n  \"system\": \"You are an expert Copywriter specialized in high-CTR titles and SEO meta descriptions. You must output ONLY valid JSON.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Based on the article content below, generate 1 SEO Optimized Title and 1 Meta Description.\\n\\n**Primary Keyword:** {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\\n\\n**Article Snippet:**\\n{{ $('22. Humanize_Content').item.json.content[0].text.substring(0, 2500) }}...\\n\\n**INSTRUCTIONS:**\\n1. The Title must be punchy, under 60 characters, and include the keyword.\\n2. The Meta Description must be under 160 characters and entice a click.\\n3. **Output Format:** Return ONLY a JSON object exactly like this:\\n{\\n\\\"title\\\": \\\"Your Title Here\\\",\\n\\\"meta\\\": \\\"Your Description Here\\\"\\n}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "bf2224c5-55ce-4bee-9bc6-2e0c7ac6ffab",
+      "name": "25. Generate_Title_Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3472,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('2. Set_Clean_Variables3').item.json.WP_URL }}/wp-json/wp/v2/posts/{{ $('26. WP_Create_Post1').item.json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"publish\"\n}",
+        "options": {}
+      },
+      "id": "d04392a1-688c-4261-8f65-9cdaa7988c92",
+      "name": "27. WP_Confirm_Published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3952,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('2. Set_Clean_Variables3').item.json.WP_URL }}/wp-json/wp/v2/media/{{ $('19. WP_Upload_Media_HTTP').item.json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"alt_text\": \"Detailed infographic about {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }} for {{ $('2. Set_Clean_Variables3').item.json.TargetAudience }}\",\n  \"description\": \"Detailed infographic explaining {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\"\n}",
+        "options": {}
+      },
+      "id": "feb05f73-543b-4c22-8a22-8242c64cd7f9",
+      "name": "19.5 Set_Image_Alt_Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4128,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "pranavkumar1920@gmail.com",
+        "subject": "=QA FAILED: {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}",
+        "message": "==QA FAILED: {{ $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}\nRowID: {{ $('2. Set_Clean_Variables3').item.json.RowID }}\nFailures: {{ $json.qa.failures.join(' | ') }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3504,
+        1600
+      ],
+      "id": "f413116e-e174-492c-a421-d1185b5805f1",
+      "name": "Send a message",
+      "webhookId": "907155a8-4b04-48b0-8631-1d70ab52a529"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html =\n  $node[\"22. Humanize_Content\"].json.content?.[0]?.text\n  || '';\n\nconst keyword = $node[\"2. Set_Clean_Variables3\"].json.PrimaryKeyword || '';\nconst pillarUrl = $node[\"13. Get_Pillar_Data\"].json.Pillar_URL || '';\nconst linkListText = $node[\"15. Format_Link_List\"].json.link_list_text || '';\n\nconst stripTags = (s) => s.replace(/<[^>]+>/g, ' ');\nconst words = stripTags(html).trim().split(/\\s+/).filter(Boolean);\nconst wordCount = words.length;\n\nconst hasH2 = /<h2[\\s>]/i.test(html);\nconst hasH3 = /<h3[\\s>]/i.test(html);\n\nconst hasPillarUrl = Boolean(pillarUrl);\nconst hasPillarLink = hasPillarUrl ? html.includes(pillarUrl) : false;\n\nconst requiresInternalLinks = !/No existing posts found/i.test(linkListText);\nlet hasInternalLink = true;\nif (requiresInternalLinks) {\n  const hrefs = [...html.matchAll(/href=[\"']([^\"']+)[\"']/gi)].map(m => m[1]);\n  hasInternalLink = hrefs.some(u => u && u !== pillarUrl);\n}\n\nconst minWords = 900;\nconst hasMinWords = wordCount >= minWords;\n\nconst banned = [\"ai detector\", \"undetectable by ai\", \"perplexity\", \"burstiness\"];\nconst containsBanned = banned.some(p => html.toLowerCase().includes(p));\n\nconst fakeExperiencePatterns = [/\\bI tested\\b/i, /\\bin my experience\\b/i, /\\bour data shows\\b/i];\nconst containsFakeExperience = fakeExperiencePatterns.some(r => r.test(html));\n\nconst failures = [];\nif (!keyword) failures.push(\"Missing PrimaryKeyword.\");\nif (!hasPillarUrl) failures.push(\"Missing Pillar_URL (PillarParent did not resolve).\");\nif (!hasPillarLink) failures.push(\"Draft missing required pillar link.\");\nif (!hasH2) failures.push(\"No <h2> tags found.\");\nif (!hasH3) failures.push(\"No <h3> tags found.\");\nif (!hasMinWords) failures.push(`Too short: ${wordCount} words (min ${minWords}).`);\nif (!hasInternalLink) failures.push(\"No internal links found (LinkIndex not empty).\");\nif (containsBanned) failures.push(\"Contains banned detector/meta-writing language.\");\nif (containsFakeExperience) failures.push(\"Contains 1st-person testing/experience claims.\");\n\nreturn [{\n  json: {\n    qa: { pass: failures.length === 0, failures, wordCount, pillarUrl },\n    html\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2992,
+        1312
+      ],
+      "id": "b96e611d-a7c4-4150-8d52-75c8a1460df5",
+      "name": "23. PeopleFirst_QA (Compute)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "027ee4d4-0e5a-4d1d-8ba3-a03a9da622ec",
+              "leftValue": "={{$json.qa.pass}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3168,
+        1312
+      ],
+      "id": "879958d4-f099-4437-8a06-f6cc3967b544",
+      "name": "24. QA Pass?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://buzzingbee.in/wp-json/wp/v2/posts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": {{ JSON.stringify(JSON.parse($('25. Generate_Title_Meta').item.json.content[0].text).title) }},\n  \"content\": {{ JSON.stringify(\n    $('23. PeopleFirst_QA (Compute)').item.json.html\n    + \"\\n\\n\"\n    + $('20. Generate_FAQ_Schema').item.json.content[0].text\n  ) }},\n  \"slug\": {{ JSON.stringify($('2. Set_Clean_Variables3').item.json.Slug) }},\n  \"status\": \"draft\",\n  \"author\": 1,\n  \"featured_media\": {{ $('19. WP_Upload_Media_HTTP').item.json.id }},\n  \"meta\": {\n    \"rank_math_focus_keyword\": {{ JSON.stringify(\n      $('2. Set_Clean_Variables3').item.json.PrimaryKeyword\n      + ($('2. Set_Clean_Variables3').item.json.Tags ? (\", \" + $('2. Set_Clean_Variables3').item.json.Tags) : \"\")\n    ) }},\n    \"rank_math_description\": {{ JSON.stringify(JSON.parse($('25. Generate_Title_Meta').item.json.content[0].text).meta) }},\n    \"rank_math_robots\": [\"index\", \"follow\"],\n    \"_yoast_wpseo_metadesc\": \"{{ JSON.parse($('25. Generate_Title_Meta').item.json.content[0].text).meta }}\",\n    \"_yoast_wpseo_title\": \"{{ JSON.parse($('25. Generate_Title_Meta').item.json.content[0].text).title }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "76bef2bb-8031-4570-8100-f086404e2e5c",
+      "name": "26. WP_Create_Post1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3696,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "pranav.pk1917@gmail.com",
+        "subject": "={{ 'New Draft Ready: ' + $('2. Set_Clean_Variables3').item.json.PrimaryKeyword }}",
+        "message": "={{\n'A new SEO-optimized draft has been created and set to Pending Review.\\n\\n'\n+ 'Title: ' + JSON.parse($('25. Generate_Title_Meta').item.json.content[0].text).title + '\\n'\n+ 'Edit Link: ' + $('26. WP_Create_Post1').item.json.link + '\\n\\n'\n+ 'Please review and publish.'\n}}",
+        "options": {}
+      },
+      "id": "7f2b26f3-db2c-4401-869d-9eca36254775",
+      "name": "29. NotifyTeam",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4432,
+        1296
+      ],
+      "webhookId": "af3b0745-a05a-4c7d-8567-4d304e252689"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Workflow_Main",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Review",
+            "WP_PostID": "={{ $('26. WPCreatePost1').item.json.id }}",
+            "WP_URL": "={{ $('26. WPCreatePost1').item.json.link }}",
+            "WP_PostStatus": "draft",
+            "row_number": 0,
+            "RowID": "{{ $('2. Set_Clean_Variables3').item.json.RowID }}"
+          },
+          "matchingColumns": [
+            "RowID"
+          ],
+          "schema": [
+            {
+              "id": "RowID",
+              "displayName": "RowID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PrimaryKeyword",
+              "displayName": "PrimaryKeyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LSIKeywords",
+              "displayName": "LSIKeywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PillarParent",
+              "displayName": "PillarParent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ContentGap",
+              "displayName": "ContentGap",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SERP_Competitors",
+              "displayName": "SERP_Competitors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SuggestedMedia",
+              "displayName": "SuggestedMedia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SEOIntent",
+              "displayName": "SEOIntent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TargetAudience",
+              "displayName": "TargetAudience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Visual_Style",
+              "displayName": "Visual_Style",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Persona_Override",
+              "displayName": "Persona_Override",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "WP_URL",
+              "displayName": "WP_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "DatePublished",
+              "displayName": "DatePublished",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lighthouse_Score",
+              "displayName": "Lighthouse_Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "MetaDescription",
+              "displayName": "MetaDescription",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Tags",
+              "displayName": "Tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "FeaturedImage_URL",
+              "displayName": "FeaturedImage_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ReferenceImage_URL",
+              "displayName": "ReferenceImage_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Slug",
+              "displayName": "Slug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "WP_PostID",
+              "displayName": "WP_PostID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "WP_PostStatus",
+              "displayName": "WP_PostStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2e6b85e1-422a-4493-9923-90da680b3408",
+      "name": "28. Update_Sheet_Final",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4208,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7ba8bc4-6d50-431c-9bea-7df0cf8a8d96",
+              "name": "RowID",
+              "value": "={{ $json.RowID }}",
+              "type": "number"
+            },
+            {
+              "id": "f8a812ae-d5bf-4f23-b55c-a8198ca2ca00",
+              "name": "Pillar_PostID",
+              "value": "={{ $json.Pillar_PostID }}",
+              "type": "string"
+            },
+            {
+              "id": "eaed81a2-278c-4ba8-85a9-0d88a5d3e0e9",
+              "name": "Pillar_Topic",
+              "value": "={{ $json.Pillar_Topic }}",
+              "type": "string"
+            },
+            {
+              "id": "a0987a14-493d-41a1-9626-6ab71db5d5ba",
+              "name": "Pillar_Status",
+              "value": "={{ $json.Pillar_Status }}",
+              "type": "string"
+            },
+            {
+              "id": "4c040363-ad4e-4cbf-9df1-05b89a01243e",
+              "name": "Last_Sync",
+              "value": "={{ $json.Last_Sync }}",
+              "type": "string"
+            },
+            {
+              "id": "cdc7b8ad-b379-4ca7-a470-b49ccf8ba1cc",
+              "name": "Pillar_URL",
+              "value": "={{ $json.Pillar_URL }}",
+              "type": "string"
+            },
+            {
+              "id": "c1a75505-d27c-4e68-80e2-8e497198fc9d",
+              "name": "Primary_Anchor",
+              "value": "={{ $json.Primary_Anchor }}",
+              "type": "string"
+            },
+            {
+              "id": "b01eb0d8-3978-4f76-9a4b-3d83cdc466d2",
+              "name": "Anchor_Variations",
+              "value": "={{ $json.Anchor_Variations }}",
+              "type": "string"
+            },
+            {
+              "id": "64db4bb0-27a5-4667-ac14-7d76d32b5318",
+              "name": "Pillar_Description",
+              "value": "={{ $json.Pillar_Description }}",
+              "type": "string"
+            },
+            {
+              "id": "a5cacc16-a2a3-4e38-8243-61b8bedf00f1",
+              "name": "WP_CategoryID",
+              "value": "={{ $json.WP_CategoryID }}",
+              "type": "number"
+            },
+            {
+              "id": "ad24bbd2-f043-4e77-b035-51b4deaacaeb",
+              "name": "Pillar_Slug",
+              "value": "={{ $json.Pillar_Slug }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        432
+      ],
+      "id": "fda9ff79-7489-42e4-bc8d-22e08557dc79",
+      "name": "P2. SetCleanPillarVars"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c8b0db47-b6d0-4d93-9972-a2e75b8b7a72",
+              "leftValue": "={{ $json.Pillar_Status }}",
+              "rightValue": "start",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "ff820394-132d-4a02-a8c7-33f5d199561a",
+              "leftValue": "={{ $json.Pillar_Status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "aa920394-132d-4a02-a8c7-33f5d199562b",
+              "leftValue": "={{ $json.Pillar_Status }}",
+              "rightValue": "needs-refresh",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        432
+      ],
+      "id": "4975fd26-e364-43a2-aeb0-4d360ea29b65",
+      "name": "P3. GatekeeperPillar_Status"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807196694,
+          "mode": "list",
+          "cachedResultName": "Pillar_Clusters"
+        },
+        "event": "rowUpdate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        432
+      ],
+      "id": "ccc0279b-b994-478c-8767-7dc506faab17",
+      "name": "P1. PillarClusters Trigger1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "P4-cond-check-postid",
+              "leftValue": "={{ $json.Pillar_PostID }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        432
+      ],
+      "id": "0baed450-12d4-4cff-b605-7eb20799d63c",
+      "name": "P4. DecideCreateOrUpdate"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807196694,
+          "mode": "list",
+          "cachedResultName": "Pillar_Clusters",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=807196694"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Pillar_Status": "FailedQA",
+            "Last_Sync": "=={{ $now.format('yyyy-MM-dd HH:mm:ss') }}"
+          },
+          "matchingColumns": [
+            "RowID"
+          ],
+          "schema": [
+            {
+              "id": "RowID",
+              "displayName": "RowID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pillar_PostID",
+              "displayName": "Pillar_PostID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Topic",
+              "displayName": "Pillar_Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Status",
+              "displayName": "Pillar_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last_Sync",
+              "displayName": "Last_Sync",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_URL",
+              "displayName": "Pillar_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Primary_Anchor",
+              "displayName": "Primary_Anchor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Anchor_Variations",
+              "displayName": "Anchor_Variations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Description",
+              "displayName": "Pillar_Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WP_CategoryID",
+              "displayName": "WP_CategoryID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Slug",
+              "displayName": "Pillar_Slug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        704,
+        1200
+      ],
+      "id": "97edd608-f9c7-4073-ad80-e283c34c3818",
+      "name": "P18. UpdatePillarClusters_QAFail"
+    },
+    {
+      "parameters": {
+        "sendTo": "pranavkumar1920@gmail.com",
+        "subject": "=❌ Pillar QA FAILED: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}",
+        "message": "=❌ PILLAR QA FAILED  Topic: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }} RowID: {{ $('P2. SetCleanPillarVars').item.json.RowID }}  📊 QA Metrics: - Word Count: {{ $('P12. PillarQA_Compute').item.json.qa.wordCount }} - Has Cluster Links: {{ $('P12. PillarQA_Compute').item.json.qa.hasClusterLinks ? 'Yes' : 'No' }}  ⚠️ Failures: {{ $('P12. PillarQA_Compute').item.json.qa.failures.join('\\n') }}  Action Required: 1. Check PillarClusters sheet (status now: FailedQA) 2. Review failure reasons above 3. Fix root cause (e.g., add more cluster posts, adjust prompts) 4. Change status to \"start\" to retry  Sheet: https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=807196694",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        1200
+      ],
+      "id": "f381da90-2208-43dc-aa7b-4fc7b570541f",
+      "name": "P19. NotifyPillarQAFail",
+      "webhookId": "907d8981-7bae-4579-811e-4b9079d199d0"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('P2. SetCleanPillarVars').item.json.WP_URL }}/wp-json/wp/v2/posts/{{ $('P2. SetCleanPillarVars').item.json.Pillar_PostID }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ JSON.parse($json.content[0].text).title }}\",\n  \"content\": \"{{ $('P12. PillarQA_Compute').item.json.html }}\",\n  \"slug\": \"{{ $('P2. SetCleanPillarVars').item.json.Pillar_Slug }}\",\n  \"status\": \"draft\",\n  \"categories\": [{{ $('P2. SetCleanPillarVars').item.json.WP_CategoryID }}],\n  \"meta\": {\n    \"rank_math_focus_keyword\": \"{{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}\",\n    \"rank_math_description\": \"{{ JSON.parse($json.content[0].text).meta }}\",\n    \"rank_math_robots\": [\"index\", \"follow\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1152,
+        912
+      ],
+      "id": "affc75db-5560-45b2-b255-d0c5e7047342",
+      "name": "20. WP_UpdatePillarPost"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.exa.ai/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"comprehensive pillar guide about {{ $json.Pillar_Topic }}\",\n  \"numResults\": 7,\n  \"useAutoprompt\": true,\n  \"contents\": {\n    \"text\": true\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        784,
+        432
+      ],
+      "id": "055e566a-4513-4218-bf9d-2dc14dc9981e",
+      "name": "P5. ExaResearchPillar"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-haiku-20240307\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are an SEO research analyst. Summarize SERP research into 10-15 concise, factual bullet points. Do NOT invent information.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Summarize this research about {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}:\\n\\n{{ JSON.stringify($json.results) }}\\n\\nOutput ONLY bullet points, no intro text.\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1008,
+        432
+      ],
+      "id": "baa41f27-0d70-4de0-bbaa-60d1b8baf980",
+      "name": "P6. SummarizeResearchHaiku"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1005490582,
+          "mode": "list",
+          "cachedResultName": "Link_Index",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=1005490582"
+        },
+        "combineFilters": "=",
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          },
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        608,
+        720
+      ],
+      "id": "f9752a42-3ab4-44b3-a661-e1e712df1dd1",
+      "name": "P7. GetLinkIndexForPillar"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if we have any cluster posts\nif ($input.all().length === 0) {\n  return [{\n    json: {\n      linklisttext: \"No existing cluster posts found.\",\n      linkArray: []\n    }\n  }];\n}\n\n// Format cluster links as bullet list\nconst links = $input.all().map(item => {\n  return `- Topic: ${item.json.PrimaryKeyword} | URL: ${item.json.URL}`;\n}).join('\\n');\n\n// Also create structured array for later use\nconst linkArray = $input.all().map(item => ({\n  keyword: item.json.PrimaryKeyword,\n  title: item.json.PostTitle,\n  url: item.json.URL,\n  category: item.json.Category\n}));\n\nreturn [{\n  json: {\n    linklisttext: links,\n    linkArray: linkArray,\n    totalLinks: linkArray.length\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        720
+      ],
+      "id": "98e09214-b77b-49a0-924b-8dc558cd9672",
+      "name": "P8. FormatClusterLinksForPillar"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 2500,\n  \"system\": \"You are an expert SEO content strategist specializing in pillar page architecture.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a comprehensive PILLAR PAGE outline for: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}\\n\\nDescription: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Description }}\\n\\nResearch Summary:\\n{{ $('P6. SummarizeResearchHaiku').item.json.content[0].text }}\\n\\nCluster Posts to Link:\\n{{ $json.linklisttext }}\\n\\nREQUIREMENTS:\\n1. This is a HUB pillar page, target ~3,000 words structure\\n2. FIRST SECTION RULE (Critical): The first H2 must directly answer the pillar topic as a question.\\n3. ANSWER-FIRST OPENING: Plan a 75-100 word introduction that directly addresses the pillar topic. Mark as [DIRECT ANSWER BLOCK].\\n4. PAA INTEGRATION: Identify 5-7 PAA questions and plan FAQ sections.\\n5. CITATION ANCHORS: Mark at least 5 places for named statistic citations as [CITE: source name].\\n6. Create comprehensive H2/H3/H4 outline covering all major subtopics\\n7. Include a dedicated section (e.g., \\\"Related Resources\\\" or \\\"Deep Dives\\\") that will link to the cluster posts above\\n8. Mark where internal cluster links should be placed throughout the outline\\n9. Ensure topical breadth - cover the entire subject domain\\n10. Output ONLY the Markdown outline (## ### ####), no extra commentary\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1280,
+        720
+      ],
+      "id": "fe6019e0-c1b4-4a3e-af15-f9f4cc8ca4f6",
+      "name": "P9. GeneratePillarOutline"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are a world-class SEO content writer specializing in comprehensive pillar pages. Write authoritative, well-structured hub content that serves as the definitive resource on a topic.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a comprehensive PILLAR PAGE article:\\n\\nTopic: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}\\nDescription: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Description }}\\n\\nOutline:\\n{{ $json.content[0].text }}\\n\\nResearch Summary:\\n{{ $('P6. SummarizeResearchHaiku').item.json.content[0].text }}\\n\\nCluster URLs to Link:\\n{{ $('P8. FormatClusterLinksForPillar').item.json.linklisttext }}\\n\\nCRITICAL REQUIREMENTS (2026 SEO):\\n1. Expand the outline into a FULL pillar article targeting ~3,000 words\\n2. Use proper WordPress HTML: <h2>, <h3>, <h4>, <p>, <ul>, <li>\\n3. ANSWER-FIRST RULE: The opening paragraph must be 75-100 words directly addressing the pillar topic. Start with a declarative sentence. No fluff preamble.\\n4. CITATION RULE: Every statistic must be attributed to a named source: 'According to [Source Name], [stat].' No vague phrases without named sources.\\n5. FAQ ANCHOR: Include an FAQ section with <h2>Frequently Asked Questions</h2> using PAA questions from research.\\n6. Integrate internal links to cluster posts as <a href=\\\"URL\\\">anchor text</a> in relevant sections\\n7. This is a HUB page - provide broad coverage, not deep tactical details (save those for cluster posts)\\n8. Base ALL facts on the research summary - do NOT fabricate data\\n9. Use clear, scannable formatting with short paragraphs\\n10. Output ONLY raw HTML starting with <h2>, no markdown, no commentary\\n11. Include at least {{ $('P8. FormatClusterLinksForPillar').item.json.totalLinks }} internal links\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1504,
+        720
+      ],
+      "id": "d800f5b8-f2da-445e-b342-50ae8eec2bf4",
+      "name": "P10. WritePillarArticle"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 4096,\n  \"system\": \"You are an elite SEO copywriter who writes in the style of Brian Dean (Backlinko). Your goal is to produce people-first, high-clarity, highly actionable content.\\n\\nCORE WRITING VOICE:\\n1. Bucket Brigades - Use short bridges: \\\"Here's the truth:\\\", \\\"But there's a catch:\\\"\\n2. Burstiness - Mix short punchy lines with longer explanatory sentences\\n3. Visual Formatting - Bold key phrases, use bullet points\\n4. No Fluff - Delete sentences that don't add value\\n\\nHELPFUL RULES:\\n1. No fabricated experience - Don't claim testing unless draft has specific evidence\\n2. No new facts - Don't add stats/case studies not in the draft\\n3. Strengthen usefulness - Convert vague advice into concrete steps\\n4. Preserve all internal links exactly as provided\\n\\nNEGATIVE CONSTRAINTS:\\n- NO AI detector mentions, \\\"tapestry\\\", \\\"symphony\\\", \\\"unleash\\\", \\\"elevate\\\"\\n- Keep 8th-grade reading level\\n- Avoid passive voice\\n\\nOUTPUT: Refined HTML only, no markdown, no commentary\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Refine this pillar page draft using Backlinko style. Improve clarity, scannability, and actionability. Preserve ALL <a href> links exactly.\\n\\nDraft:\\n{{ $json.content[0].text }}\\n\\nOutput ONLY the refined HTML.\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1728,
+        720
+      ],
+      "id": "b4a8b5d1-0905-41ae-a5e7-39621d2afc13",
+      "name": "P11. HumanizePillarContent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $('P11. HumanizePillarContent').item.json.content?.[0]?.text;\nconst Pillar_Topic = $('P2. SetCleanPillarVars').item.json.Pillar_Topic;\nconst linkArray = $('P8. FormatClusterLinksForPillar').item.json.linkArray || [];\n\n// Strip HTML tags for word count\nconst stripTags = (s) => s.replace(/<[^>]*>/g, '');\nconst words = stripTags(html).trim().split(/\\s+/).filter(Boolean);\nconst wordCount = words.length;\n\n// Structure checks\nconst hasH2 = /<h2/i.test(html);\nconst hasH3 = /<h3/i.test(html);\nconst hasTopic = html.toLowerCase().includes(Pillar_Topic.toLowerCase());\n\n// Internal link check\nconst requiresClusterLinks = linkArray.length > 0;\nlet hasClusterLinks = true;\nif (requiresClusterLinks) {\n  const hrefs = [...html.matchAll(/href=\"([^\"]+)\"/gi)].map(m => m[1]);\n  hasClusterLinks = linkArray.some(link => hrefs.includes(link.url));\n}\n\n// Min word count for pillar\nconst minWords = 2000;\nconst hasMinWords = wordCount >= minWords;\n\n// Banned phrases\nconst banned = [\"ai detector\", \"undetectable by ai\", \"perplexity\", \"burstiness\"];\nconst containsBanned = banned.some(p => html.toLowerCase().includes(p));\n\n// Fake experience patterns\nconst fakeExperiencePatterns = [/tested\\s+this/i, /my\\s+experience/i, /data\\s+shows/i];\nconst containsFakeExperience = fakeExperiencePatterns.some(r => r.test(html));\n\n// Collect failures\nconst failures = [];\nif (!Pillar_Topic) failures.push(\"Missing Pillar_Topic.\");\nif (!hasH2) failures.push(\"No h2 tags found.\");\nif (!hasH3) failures.push(\"No h3 tags found.\");\nif (!hasTopic) failures.push(\"Content doesn't mention pillar topic.\");\nif (!hasMinWords) failures.push(`Too short: ${wordCount} words (min ${minWords}).`);\nif (!hasClusterLinks && requiresClusterLinks) failures.push(\"No internal cluster links found.\");\nif (containsBanned) failures.push(\"Contains banned AI detector language.\");\nif (containsFakeExperience) failures.push(\"Contains 1st-person testing/experience claims.\");\n\nreturn [{\n  json: {\n    qa: {\n      pass: failures.length === 0,\n      failures,\n      wordCount,\n      hasClusterLinks\n    },\n    html\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        1104
+      ],
+      "id": "da3659fc-a361-4cd8-b4a1-5bba24ba8b8a",
+      "name": "P12. PillarQA_Compute"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fc64f0e0-9156-4746-8389-b05ba83e83fa",
+              "leftValue": "=={{ $json.qa.pass }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        1120
+      ],
+      "id": "32cc2f4c-c234-4a02-8464-4b307b578dad",
+      "name": "P13. QA_Pass_Decision"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 500,\n  \"system\": \"You are an expert copywriter specialized in high-CTR SEO titles and meta descriptions. Output ONLY valid JSON.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate 1 SEO title and 1 meta description for this pillar page:\\n\\nTopic: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}\\nContent Preview: {{ $json.html.substring(0, 1500) }}\\n\\nREQUIREMENTS:\\n1. Title: Under 60 characters, include topic keyword, make it compelling\\n2. Meta: Under 160 characters, entice click, mention it's a complete guide\\n3. Output format (exact JSON):\\n{\\n  \\\"title\\\": \\\"Your Title Here\\\",\\n  \\\"meta\\\": \\\"Your Meta Description Here\\\"\\n}\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        704,
+        1008
+      ],
+      "id": "f282ee3a-1d0c-4f3e-ab41-4dd68a059902",
+      "name": "P14. GeneratePillarTitleMeta"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8",
+          "mode": "list",
+          "cachedResultName": "SEO_Content_Engine_V3.2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 807196694,
+          "mode": "list",
+          "cachedResultName": "Pillar_Clusters",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTXtkjeaNoI6iBAn2n_e8yhnFRBsaTXbQ3wz7Kw6jy8/edit#gid=807196694"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "RowID": "",
+            "Pillar_PostID": "=={{ $json.id }}",
+            "Pillar_URL": "=={{ $json.link }}",
+            "Pillar_Status": "Review",
+            "Last_Sync": "=={{ $now.format('yyyy-MM-dd HH:mm:ss') }}"
+          },
+          "matchingColumns": [
+            "RowID"
+          ],
+          "schema": [
+            {
+              "id": "RowID",
+              "displayName": "RowID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pillar_PostID",
+              "displayName": "Pillar_PostID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Topic",
+              "displayName": "Pillar_Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Status",
+              "displayName": "Pillar_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last_Sync",
+              "displayName": "Last_Sync",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_URL",
+              "displayName": "Pillar_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Primary_Anchor",
+              "displayName": "Primary_Anchor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Anchor_Variations",
+              "displayName": "Anchor_Variations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Description",
+              "displayName": "Pillar_Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WP_CategoryID",
+              "displayName": "WP_CategoryID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pillar_Slug",
+              "displayName": "Pillar_Slug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1376,
+        1008
+      ],
+      "id": "fbae9498-6d3b-4d07-962b-ba4cc33eb60d",
+      "name": "P16. UpdatePillarClusters_Success"
+    },
+    {
+      "parameters": {
+        "sendTo": "pranavkumar1920@gmail.com",
+        "subject": "New Pillar Draft Ready: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }",
+        "message": "=✅ New Pillar Post Created Successfully  Topic: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }} Status: Draft (Ready for Review)  📊 QA Metrics: - Word Count: {{ $('P12. PillarQA_Compute').item.json.qa.wordCount }} - Internal Links: {{ $('P12. PillarQA_Compute').item.json.qa.hasClusterLinks ? 'Yes' : 'No' }}  🔗 Edit Link: {{ $('P15. WP_CreatePillarPost').item.json.link }}  Post ID: {{ $('P15. WP_CreatePillarPost').item.json.id }} Slug: {{ $('P2. SetCleanPillarVars').item.json.Pillar_Slug }}  Please review and publish when ready.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        1008
+      ],
+      "id": "eb4d1b11-ec64-4adb-ae91-bd65d5e5fc43",
+      "name": "P17. NotifyPillarSuccess",
+      "webhookId": "dce5f699-f5c1-43f2-acbd-b721cd5842c3"
+    },
+    {
+      "parameters": {
+        "maxItems": 50
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        832,
+        720
+      ],
+      "id": "c9e97fb6-288c-4142-aa2f-1ee3bc5f1986",
+      "name": "P7b. LimitClusterLinks"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "54493f53-3c72-4a3d-8f1a-4a5dcfd663a9",
+              "leftValue": "=={{ $('P2. SetCleanPillarVars').item.json.Pillar_PostID }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        1008
+      ],
+      "id": "23280f9c-64c7-452c-a61c-3f8fe3471db4",
+      "name": "P14b. RouteCreateUpdate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('P2. SetCleanPillarVars').item.json.WP_URL }}/wp-json/wp/v2/posts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ JSON.parse($json.content[0].text).title }}\",\n  \"content\": \"{{ $('P12. PillarQA_Compute').item.json.html }}\",\n  \"slug\": \"{{ $('P2. SetCleanPillarVars').item.json.Pillar_Slug }}\",\n  \"status\": \"draft\",\n  \"author\": 1,\n  \"categories\": [{{ $('P2. SetCleanPillarVars').item.json.WP_CategoryID }}],\n  \"meta\": {\n    \"rank_math_focus_keyword\": \"{{ $('P2. SetCleanPillarVars').item.json.Pillar_Topic }}\",\n    \"rank_math_description\": \"{{ JSON.parse($json.content[0].text).meta }}\",\n    \"rank_math_robots\": [\"index\", \"follow\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1168,
+        1072
+      ],
+      "id": "072162c1-c04c-48b8-9421-ec444ad1bf91",
+      "name": "P15. WP_CreatePillarPost"
+    },
+    {
+      "parameters": {
+        "content": "## P6, P9, P10, P11, P14 \nall hit Anthropic with anthropic-version",
+        "height": 368,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -48
+      ],
+      "id": "4999ae82-9a51-4536-ac0b-83e817e14fe3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you are a prompt writer, take this research data {{ $('P6. SummarizeResearchHaiku').item.json.content[0].text }} and create a highly detailed image generation prompt for Flux.1 to create a \"Modern, Minimalist Vector Infographic\" representing the pillar topic concepts. CRITICAL: 1. Style MUST be flat vector art, isometric, clean white background. 2. NO TEXT inside the image. 3. Describe layout, colors, objects. 4. Output ONLY the prompt string.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1216,
+        368
+      ],
+      "id": "8e50e0ef-07df-4781-bb73-98b3cba9d4ae",
+      "name": "P6b. GeneratePillarImagePrompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {\n    \"prompt\": {{ JSON.stringify($('P6b. GeneratePillarImagePrompt').item.json.content[0].text) }},\n    \"aspect_ratio\": \"16:9\",\n    \"output_format\": \"jpg\",\n    \"output_quality\": 90\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1584,
+        432
+      ],
+      "id": "65743d69-b15f-4ed3-908a-0ba6e500eb9e",
+      "name": "P6c. GeneratePillarImage"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -112,
+        704
+      ],
+      "id": "479d3f1b-f47a-4309-a600-48c72627c632",
+      "name": "P6d. WaitForPillarImage",
+      "webhookId": "P6d-wait-pillar-hook-uuid"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.replicate.com/v1/predictions/{{ $('P6c. GeneratePillarImage').item.json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        96,
+        688
+      ],
+      "id": "697cf158-9c08-4069-9b3d-bc85bc3ca1bd",
+      "name": "P6e. CheckPillarImageStatus"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "P6f-cond",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        304,
+        672
+      ],
+      "id": "a2dad3e4-dfca-4f45-bb65-54d84e8d7ef4",
+      "name": "P6f. IsPillarImageReady"
+    },
+    {
+      "parameters": {
+        "content": "⚠ PER-CLIENT SETUP REQUIRED:\n1. Google Sheet: Duplicate the template sheet, update the documentId in ALL Google Sheets nodes\n2. WordPress: Update the WordPress credential to point to client's WordPress instance\n3. WP_URL column in sheet: Set to client's WordPress base URL (e.g. https://client-domain.com)\n4. Pillar_Clusters tab: Add client's pillar topics before running any cluster articles\n5. Link_Index tab: Will populate automatically as articles are published — starts empty",
+        "height": 300,
+        "width": 520,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        -48
+      ],
+      "id": "c415caac-0d5c-453f-b2fd-d93b9ccb7386",
+      "name": "⚠ V4 Client Setup"
+    },
+    {
+      "parameters": {
+        "content": "⚠ CREDENTIALS NEEDED:\n- Google Sheets OAuth (G-Auth-Pranav.pk1917)\n- Anthropic API Key (anthropic-key)\n- DeepSeek API (DeepSeek account)\n- Replicate API (Replicate - Img Gen)\n- WordPress API (per client — create new credential per client)\n- Exa AI API (Exa.ai Key)",
+        "height": 250,
+        "width": 480,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        320
+      ],
+      "id": "4946d13a-2d6f-4ac5-a13c-e998f09987d9",
+      "name": "⚠ V4 Credentials"
+    },
+    {
+      "parameters": {
+        "content": "⚠ MANUAL STEP: After importing into n8n, go to workflow Settings → Error Workflow and select your SYS-Error-Handler workflow. Replace SYS-ERROR-HANDLER-ID with the actual ID.",
+        "height": 150,
+        "width": 500,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        640
+      ],
+      "id": "6d2e7d9e-a55c-490c-8a84-938647ec2fe6",
+      "name": "⚠ V4 Error Workflow"
+    },
+    {
+      "parameters": {
+        "content": "⚠ MANUAL: If client uses LiteSpeed, add their specific purge API call here",
+        "height": 80,
+        "width": 420,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3920,
+        1088
+      ],
+      "id": "7a4304ff-732a-4e0b-a19c-b99c6fe51ab3",
+      "name": "⚠ LiteSpeed Caution"
+    },
+    {
+      "parameters": {
+        "content": "Routes create vs update. Both paths do research first. Actual WP create vs update happens at P14b based on PostID.",
+        "height": 100,
+        "width": 420,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        368,
+        80
+      ],
+      "id": "3582f0fa-64eb-4137-ae43-dc6a86e29ba1",
+      "name": "⚠ P4 Routing"
+    },
+    {
+      "parameters": {
+        "content": "⚠ Posts publish as DRAFT. Reviewer approves in WordPress admin or update WP_PostStatus column to 'publish' in sheet.",
+        "height": 100,
+        "width": 460,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3728,
+        1600
+      ],
+      "id": "06b72e83-e4d4-43fe-b79b-882dfca43cd7",
+      "name": "⚠ Draft Publish 26. WP_Create_Post1"
+    },
+    {
+      "parameters": {
+        "content": "⚠ Posts publish as DRAFT. Reviewer approves in WordPress admin or update WP_PostStatus column to 'publish' in sheet.",
+        "height": 100,
+        "width": 460,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        64
+      ],
+      "id": "3ba02fcd-25c0-487f-bea2-1688421f1971",
+      "name": "⚠ Draft Publish P15. WP_CreatePillarPost"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "1. Trigger_Watch_Sheet3": {
+      "main": [
+        [
+          {
+            "node": "2. Set_Clean_Variables3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Set_Clean_Variables3": {
+      "main": [
+        [
+          {
+            "node": "3. Gatekeeper_Check_Status3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Gatekeeper_Check_Status3": {
+      "main": [
+        [
+          {
+            "node": "4. GPS_Find_Row_Number3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. GPS_Find_Row_Number3": {
+      "main": [
+        [
+          {
+            "node": "5. Lock_Row_Status3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Lock_Row_Status3": {
+      "main": [
+        [
+          {
+            "node": "6. Research_Exa_AI3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Research_Exa_AI3": {
+      "main": [
+        [
+          {
+            "node": "7. Search_Reference_Image3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. Vision_Analyze_Image3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7.5 Download_Thumbnail2": {
+      "main": [
+        [
+          {
+            "node": "8. Vision_Analyze_Image3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Search_Reference_Image3": {
+      "main": [
+        [
+          {
+            "node": "7.5 Download_Thumbnail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11. Check_Image_Status2": {
+      "main": [
+        [
+          {
+            "node": "12. Is_Image_Ready?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12. Is_Image_Ready?2": {
+      "main": [
+        [
+          {
+            "node": "13. Get_Pillar_Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "10. Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10. Wait2": {
+      "main": [
+        [
+          {
+            "node": "11. Check_Image_Status2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9. Image generator3": {
+      "main": [
+        [
+          {
+            "node": "10. Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "9. Image generator3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13. Get_Pillar_Data": {
+      "main": [
+        [
+          {
+            "node": "14. Get_Link_Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "14. Get_Link_Index": {
+      "main": [
+        [
+          {
+            "node": "15. Format_Link_List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "15. Format_Link_List": {
+      "main": [
+        [
+          {
+            "node": "16. Pick_Persona",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16. Pick_Persona": {
+      "main": [
+        [
+          {
+            "node": "17. Generate_Outline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "17. Generate_Outline": {
+      "main": [
+        [
+          {
+            "node": "18. Download_Flux_Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "18. Download_Flux_Image": {
+      "main": [
+        [
+          {
+            "node": "19. WP_Upload_Media_HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "19. WP_Upload_Media_HTTP": {
+      "main": [
+        [
+          {
+            "node": "19.5 Set_Image_Alt_Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "20. Generate_FAQ_Schema": {
+      "main": [
+        [
+          {
+            "node": "20b. Generate_Article_Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "20b. Generate_Article_Schema": {
+      "main": [
+        [
+          {
+            "node": "21. Write_Full_Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "21. Write_Full_Article": {
+      "main": [
+        [
+          {
+            "node": "22. Humanize_Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "22. Humanize_Content": {
+      "main": [
+        [
+          {
+            "node": "23. PeopleFirst_QA (Compute)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "25. Generate_Title_Meta": {
+      "main": [
+        [
+          {
+            "node": "26. WP_Create_Post1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "27. WP_Confirm_Published": {
+      "main": [
+        [
+          {
+            "node": "28. Update_Sheet_Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "19.5 Set_Image_Alt_Text": {
+      "main": [
+        [
+          {
+            "node": "20. Generate_FAQ_Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "23. PeopleFirst_QA (Compute)": {
+      "main": [
+        [
+          {
+            "node": "24. QA Pass?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24. QA Pass?": {
+      "main": [
+        [
+          {
+            "node": "25. Generate_Title_Meta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "26. WP_Create_Post1": {
+      "main": [
+        [
+          {
+            "node": "27. WP_Confirm_Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "28. Update_Sheet_Final": {
+      "main": [
+        [
+          {
+            "node": "29. NotifyTeam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P2. SetCleanPillarVars": {
+      "main": [
+        [
+          {
+            "node": "P3. GatekeeperPillar_Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P3. GatekeeperPillar_Status": {
+      "main": [
+        [
+          {
+            "node": "P4. DecideCreateOrUpdate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P1. PillarClusters Trigger1": {
+      "main": [
+        [
+          {
+            "node": "P2. SetCleanPillarVars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P4. DecideCreateOrUpdate": {
+      "main": [
+        [
+          {
+            "node": "P5. ExaResearchPillar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "P5. ExaResearchPillar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P18. UpdatePillarClusters_QAFail": {
+      "main": [
+        [
+          {
+            "node": "P19. NotifyPillarQAFail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "20. WP_UpdatePillarPost": {
+      "main": [
+        [
+          {
+            "node": "P16. UpdatePillarClusters_Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P5. ExaResearchPillar": {
+      "main": [
+        [
+          {
+            "node": "P6. SummarizeResearchHaiku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P6. SummarizeResearchHaiku": {
+      "main": [
+        [
+          {
+            "node": "P6b. GeneratePillarImagePrompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P7. GetLinkIndexForPillar": {
+      "main": [
+        [
+          {
+            "node": "P7b. LimitClusterLinks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P8. FormatClusterLinksForPillar": {
+      "main": [
+        [
+          {
+            "node": "P9. GeneratePillarOutline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P9. GeneratePillarOutline": {
+      "main": [
+        [
+          {
+            "node": "P10. WritePillarArticle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P10. WritePillarArticle": {
+      "main": [
+        [
+          {
+            "node": "P11. HumanizePillarContent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P11. HumanizePillarContent": {
+      "main": [
+        [
+          {
+            "node": "P12. PillarQA_Compute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P12. PillarQA_Compute": {
+      "main": [
+        [
+          {
+            "node": "P13. QA_Pass_Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P13. QA_Pass_Decision": {
+      "main": [
+        [
+          {
+            "node": "P14. GeneratePillarTitleMeta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "P18. UpdatePillarClusters_QAFail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P14. GeneratePillarTitleMeta": {
+      "main": [
+        [
+          {
+            "node": "P14b. RouteCreateUpdate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P16. UpdatePillarClusters_Success": {
+      "main": [
+        [
+          {
+            "node": "P17. NotifyPillarSuccess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P7b. LimitClusterLinks": {
+      "main": [
+        [
+          {
+            "node": "P8. FormatClusterLinksForPillar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P14b. RouteCreateUpdate": {
+      "main": [
+        [
+          {
+            "node": "20. WP_UpdatePillarPost",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "P15. WP_CreatePillarPost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P15. WP_CreatePillarPost": {
+      "main": [
+        [
+          {
+            "node": "P16. UpdatePillarClusters_Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P6b. GeneratePillarImagePrompt": {
+      "main": [
+        [
+          {
+            "node": "P6c. GeneratePillarImage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P6c. GeneratePillarImage": {
+      "main": [
+        [
+          {
+            "node": "P6d. WaitForPillarImage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P6d. WaitForPillarImage": {
+      "main": [
+        [
+          {
+            "node": "P6e. CheckPillarImageStatus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P6e. CheckPillarImageStatus": {
+      "main": [
+        [
+          {
+            "node": "P6f. IsPillarImageReady",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "P6f. IsPillarImageReady": {
+      "main": [
+        [
+          {
+            "node": "P7. GetLinkIndexForPillar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "P6d. WaitForPillarImage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "df5c5667-f6cf-44e6-bf32-deee65baed6a",
+  "meta": {
+    "instanceId": "05d9b75b4bf0b1f6248e67f3d4c4612f48a7223424a044c21bbb5433dc66b571"
+  },
+  "nodeGroups": [],
+  "id": "oKifpBA558g24Mo0",
+  "tags": []
+}

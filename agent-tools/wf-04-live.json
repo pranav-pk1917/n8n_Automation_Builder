@@ -1,0 +1,1156 @@
+{
+  "success": true,
+  "data": {
+    "updatedAt": "2026-06-06T17:58:34.276Z",
+    "createdAt": "2026-05-22T19:51:49.267Z",
+    "id": "ixMXJFl4GWWZvw83",
+    "name": "WF-04-ICP-Score",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "content": "## WF-04 — ICP Scoring + Priority Score\n\n**Purpose:** For each cluster from WF-03, fetch top-3 SERP results via SerpAPI, run LLM ICP scoring against the client's persona, compute the 3-axis-aware priority_score, and write results back to Supabase. Budget-capped per client.config.monthly_api_budget_usd.\n\n**Trigger:** POST to `/webhook/wf-04-icp-score`\nPayload: `{ client_id, pipeline_run_id? }`\n\n**Priority score formula:**\n```\npriority_score = (commercial_intent_weight * 5)\n               + (icp_match_score * 3)\n               + (log(total_volume+1) * 1)\n               - (avg_kd * 0.5)\n               + (pillar_match_bonus * 1.5)\n               + (niche_focus_bonus * 1)\n               - (cannibalization_risk_penalty * 3)\n```\n\n**Outputs written to Supabase:**\n- `clusters.priority_score`\n- `api_cost_log`\n- `pipeline_runs` (kind=score)\n\n**Dependent workflows:** WF-05\n**Phase:** 1",
+          "height": 380,
+          "width": 420,
+          "color": 7
+        },
+        "id": "55a4eda2-51cb-43a8-ba91-22e89c03329f",
+        "name": "📋 WF-04",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          64,
+          288
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "wf-04-icp-score",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "d87788c3-7cdd-4e92-9bc6-a8181a5913ad",
+        "name": "Webhook_ICP_Score",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          544,
+          512
+        ],
+        "webhookId": "wf-04-icp-score"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.client_id) throw new Error('Missing required field: client_id');\nreturn [{ json: { client_id: body.client_id, pipeline_run_id: body.pipeline_run_id || null, started_at: new Date().toISOString() } }];"
+        },
+        "id": "170ee1cf-bfc3-4004-92d7-c331d457b661",
+        "name": "Validate_Score_Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          768,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?id=eq.{{ $json.client_id }}&select=id,config",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "35fff325-4cac-4954-8de8-3659827f8a73",
+        "name": "Fetch_Client_Config",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          992,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?client_id=eq.{{ $json.client_id }}&priority_score=is.null&select=id,canonical_head_term,theme_label,suggested_service_pillar,pillar_assignment_confidence,content_theme,keyword_count,cannibalization_risk_page_id",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2e11fd70-3965-4073-a2f9-bc64ad09cbe5",
+        "name": "Fetch_Unscored_Clusters",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1216,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Check cost ceiling before starting expensive SerpAPI calls\nconst client = ($('Fetch_Client_Config').first().json || [])[0];\nconst clusters = $input.first().json || [];\nconst ctx = $('Validate_Score_Payload').first().json;\n\nconst budget = client?.config?.monthly_api_budget_usd || 50;\nconst runsPerMonth = client?.config?.expected_runs_per_month || 4;\nconst ceilingPct = client?.config?.per_run_cost_ceiling_pct || 150;\nconst perRunCeiling = (budget / runsPerMonth) * (ceilingPct / 100);\n\n// SerpAPI costs ~$0.01 per search, we do 3 per cluster, cap at 100 clusters\nconst maxClusters = Math.min(100, clusters.length);\nconst estimatedCost = maxClusters * 3 * 0.01;\n\nif (estimatedCost > perRunCeiling) {\n  throw new Error(`Cost ceiling would be exceeded: estimated $${estimatedCost.toFixed(2)} > ceiling $${perRunCeiling.toFixed(2)}. Reduce cluster count or increase budget.`);\n}\n\nreturn clusters.slice(0, maxClusters).map(cluster => ({\n  json: {\n    ...ctx,\n    client_config: client?.config || {},\n    cluster_id: cluster.id,\n    head_term: cluster.canonical_head_term,\n    theme_label: cluster.theme_label,\n    suggested_service_pillar: cluster.suggested_service_pillar,\n    pillar_assignment_confidence: cluster.pillar_assignment_confidence || 0,\n    content_theme: cluster.content_theme,\n    keyword_count: cluster.keyword_count || 0,\n    cannibalization_risk_page_id: cluster.cannibalization_risk_page_id\n  }\n}));"
+        },
+        "id": "518b3d61-58d4-47c8-a7c5-46ad8b8e607f",
+        "name": "Check_Cost_Ceiling",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1424,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=https://serpapi.com/search.json?q={{ encodeURIComponent($json.head_term) }}&num=3&api_key={{ $env.SERPAPI_KEY }}",
+          "options": {}
+        },
+        "id": "38098eb0-18fa-4104-9fe4-9f3617c6f9ea",
+        "name": "SerpAPI_Search",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1648,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse SERP results and build LLM ICP scoring request\nconst ctx = $('Check_Cost_Ceiling').item.json;\nconst serpData = $input.first().json;\n\nconst organicResults = (serpData?.organic_results || []).slice(0, 3).map(r => ({\n  title: r.title || '',\n  snippet: r.snippet || '',\n  link: r.link || ''\n}));\n\nreturn [{\n  json: {\n    ...ctx,\n    serp_results: organicResults,\n    llm_request: {\n      model: 'google/gemini-2.0-flash-001',\n      messages: [\n        {\n          role: 'system',\n          content: 'You are an expert SEO strategist scoring a keyword cluster for B2B ICP fit. Return ONLY raw JSON with: icp_match_score (0-1), icp_match_reasoning, commercial_intent_weight (number per the scale), serp_intent_signals (array of strings), priority_score_inputs object.'\n        },\n        {\n          role: 'user',\n          content: `Score this cluster:\\n\\nHead term: ${ctx.head_term}\\nTheme: ${ctx.theme_label}\\nContent theme: ${ctx.content_theme}\\n\\nSERP results:\\n${JSON.stringify(organicResults, null, 2)}\\n\\nICP persona: ${ctx.client_config?.icp_persona || ''}\\n\\nCommercial intent scale: transactional=5, commercial_investigation=3, navigational_branded=4, local=4, informational=1, navigational_other=0, navigational_competitor=-10\\n\\nReturn: icp_match_score, icp_match_reasoning, commercial_intent_weight, serp_intent_signals, priority_score_inputs (with pillar_match_bonus=1 if pillar assigned else 0, cannibalization_risk_penalty=1 if risk flag else 0).`\n        }\n      ],\n      response_format: { type: 'json_object' },\n      temperature: 0.1,\n      max_tokens: 512\n    }\n  }\n}];"
+        },
+        "id": "491aa866-2940-4d09-bca5-0d730181cf27",
+        "name": "Build_ICP_Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1872,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://openrouter.ai/api/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "a1902f20-25e7-4acc-affc-8f8e1b97db14",
+        "name": "LLM_ICP_Score",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2096,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Compute final priority_score and update cluster\nconst ctx = $('Build_ICP_Request').item.json;\nconst llmRaw = $input.first().json;\n\nlet scoring = {};\ntry {\n  scoring = JSON.parse(llmRaw.choices?.[0]?.message?.content || '{}');\n} catch(e) {\n  scoring = { icp_match_score: 0.5, commercial_intent_weight: 1 };\n}\n\nconst inputs = scoring.priority_score_inputs || {};\nconst commercial = scoring.commercial_intent_weight || inputs.commercial_intent_weight || 1;\nconst icpScore = scoring.icp_match_score || 0.5;\nconst totalVolume = ctx.keyword_count || 1; // Proxy since we don't have volume aggregated here\nconst avgKd = 0; // Would need to join keyword_classifications — use 0 as safe default\nconst pillarBonus = (ctx.suggested_service_pillar && ctx.pillar_assignment_confidence > 0.5) ? 1 : 0;\nconst nicheBonus = inputs.niche_focus_bonus || 0;\nconst cannibalPenalty = ctx.cannibalization_risk_page_id ? 1 : 0;\n\nconst priorityScore = (commercial * 5)\n  + (icpScore * 3)\n  + (Math.log(totalVolume + 1) * 1)\n  - (avgKd * 0.5)\n  + (pillarBonus * 1.5)\n  + (nicheBonus * 1)\n  - (cannibalPenalty * 3);\n\nconst inputTokens = llmRaw.usage?.prompt_tokens || 0;\nconst outputTokens = llmRaw.usage?.completion_tokens || 0;\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    cluster_id: ctx.cluster_id,\n    priority_score: Math.round(priorityScore * 100) / 100,\n    icp_match_score: icpScore,\n    commercial_intent_weight: commercial,\n    llm_tokens: { input: inputTokens, output: outputTokens },\n    serp_cost: 3 * 0.01\n  }\n}];"
+        },
+        "id": "f13307fc-7368-4bd5-8e73-17a7f1ce37b6",
+        "name": "Compute_Priority_Score",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2304,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?id=eq.{{ $json.cluster_id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "b04eff6a-51ac-4db7-a577-401ec9874b12",
+        "name": "Update_Cluster_Score",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2528,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.SUPABASE_URL }}/rest/v1/api_cost_log",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "cb98b74f-9ad7-401e-94ab-61fb2d065d1b",
+        "name": "Log_ICP_Costs",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2752,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: true, status: 'scoring_complete' }) }}",
+          "options": {}
+        },
+        "id": "f1f9ac2b-75c8-4ab5-875a-44d175484a40",
+        "name": "Respond_Score",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          2976,
+          512
+        ]
+      },
+      {
+        "id": "f5b59fd8-bc76-4601-85f9-8104a74573af",
+        "name": "Cost_Gate_SerpAPI_RPC",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1424,
+          720
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/check_cost_ceiling",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": ":{{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ p_pipeline_run_id: $('Validate_Score_Payload').item.json.pipeline_run_id, p_predicted_additional_usd: 3.0 }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "6ee11bd5-88aa-4132-945a-c182426a052e",
+        "name": "Cost_Gate_SerpAPI_IF",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1648,
+          720
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "combinator": "or",
+            "conditions": [
+              {
+                "id": "allowed-true",
+                "leftValue": "={{ $json.allowed }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "no-run-id",
+                "leftValue": "={{ $json.reason }}",
+                "rightValue": "pipeline_run not found",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "29fbf07f-0dd7-460a-8c92-6e8b3c1f8820",
+        "name": "Send_Cost_Pause_Slack_SerpAPI",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1872,
+          720
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://slack.com/api/chat.postMessage",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_OPS_CHANNEL, text: 'WF-04 SerpAPI scoring paused by cost ceiling', blocks: [ { type: 'header', text: { type: 'plain_text', text: 'Cost ceiling hit (WF-04 SerpAPI + ICP scoring)' } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*Reason:*\\n' + $json.reason }, { type: 'mrkdwn', text: '*Cost so far:* $' + $json.cost_so_far_usd }, { type: 'mrkdwn', text: '*Ceiling:* $' + $json.cost_ceiling_usd }, { type: 'mrkdwn', text: '*Projected total:* $' + $json.projected_total_usd } ] }, { type: 'section', text: { type: 'mrkdwn', text: 'Pipeline run paused. Inspect in Supabase `pipeline_runs` (status should be `paused_cost_ceiling`).' } } ] }) }}",
+          "options": {
+            "timeout": 10000
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook_ICP_Score": {
+        "main": [
+          [
+            {
+              "node": "Validate_Score_Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate_Score_Payload": {
+        "main": [
+          [
+            {
+              "node": "Fetch_Client_Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch_Client_Config": {
+        "main": [
+          [
+            {
+              "node": "Fetch_Unscored_Clusters",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch_Unscored_Clusters": {
+        "main": [
+          [
+            {
+              "node": "Check_Cost_Ceiling",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SerpAPI_Search": {
+        "main": [
+          [
+            {
+              "node": "Build_ICP_Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build_ICP_Request": {
+        "main": [
+          [
+            {
+              "node": "LLM_ICP_Score",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "LLM_ICP_Score": {
+        "main": [
+          [
+            {
+              "node": "Compute_Priority_Score",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compute_Priority_Score": {
+        "main": [
+          [
+            {
+              "node": "Update_Cluster_Score",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update_Cluster_Score": {
+        "main": [
+          [
+            {
+              "node": "Log_ICP_Costs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Log_ICP_Costs": {
+        "main": [
+          [
+            {
+              "node": "Respond_Score",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check_Cost_Ceiling": {
+        "main": [
+          [
+            {
+              "node": "Cost_Gate_SerpAPI_RPC",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cost_Gate_SerpAPI_RPC": {
+        "main": [
+          [
+            {
+              "node": "Cost_Gate_SerpAPI_IF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cost_Gate_SerpAPI_IF": {
+        "main": [
+          [
+            {
+              "node": "SerpAPI_Search",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send_Cost_Pause_Slack_SerpAPI",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send_Cost_Pause_Slack_SerpAPI": {
+        "main": [
+          [
+            {
+              "node": "Respond_Score",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "f509b1cf-e385-4d53-a229-3df0a2c4e84f",
+    "activeVersionId": "f509b1cf-e385-4d53-a229-3df0a2c4e84f",
+    "versionCounter": 4,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-22T19:51:49.267Z",
+        "createdAt": "2026-05-22T19:51:49.267Z",
+        "role": "workflow:owner",
+        "workflowId": "ixMXJFl4GWWZvw83",
+        "projectId": "rTCks0rx4Wh918nP",
+        "project": {
+          "updatedAt": "2026-05-18T10:36:22.740Z",
+          "createdAt": "2026-05-18T10:35:48.382Z",
+          "id": "rTCks0rx4Wh918nP",
+          "name": "admin admin <pranavkumar1920@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "a7c042e5-9e28-47ff-97f4-1bf27271b298"
+        }
+      }
+    ],
+    "tags": [],
+    "activeVersion": {
+      "updatedAt": "2026-06-06T17:58:34.278Z",
+      "createdAt": "2026-06-06T17:58:34.278Z",
+      "versionId": "f509b1cf-e385-4d53-a229-3df0a2c4e84f",
+      "workflowId": "ixMXJFl4GWWZvw83",
+      "nodes": [
+        {
+          "parameters": {
+            "content": "## WF-04 — ICP Scoring + Priority Score\n\n**Purpose:** For each cluster from WF-03, fetch top-3 SERP results via SerpAPI, run LLM ICP scoring against the client's persona, compute the 3-axis-aware priority_score, and write results back to Supabase. Budget-capped per client.config.monthly_api_budget_usd.\n\n**Trigger:** POST to `/webhook/wf-04-icp-score`\nPayload: `{ client_id, pipeline_run_id? }`\n\n**Priority score formula:**\n```\npriority_score = (commercial_intent_weight * 5)\n               + (icp_match_score * 3)\n               + (log(total_volume+1) * 1)\n               - (avg_kd * 0.5)\n               + (pillar_match_bonus * 1.5)\n               + (niche_focus_bonus * 1)\n               - (cannibalization_risk_penalty * 3)\n```\n\n**Outputs written to Supabase:**\n- `clusters.priority_score`\n- `api_cost_log`\n- `pipeline_runs` (kind=score)\n\n**Dependent workflows:** WF-05\n**Phase:** 1",
+            "height": 380,
+            "width": 420,
+            "color": 7
+          },
+          "id": "55a4eda2-51cb-43a8-ba91-22e89c03329f",
+          "name": "📋 WF-04",
+          "type": "n8n-nodes-base.stickyNote",
+          "typeVersion": 1,
+          "position": [
+            64,
+            288
+          ]
+        },
+        {
+          "parameters": {
+            "httpMethod": "POST",
+            "path": "wf-04-icp-score",
+            "responseMode": "responseNode",
+            "options": {}
+          },
+          "id": "d87788c3-7cdd-4e92-9bc6-a8181a5913ad",
+          "name": "Webhook_ICP_Score",
+          "type": "n8n-nodes-base.webhook",
+          "typeVersion": 2,
+          "position": [
+            544,
+            512
+          ],
+          "webhookId": "wf-04-icp-score"
+        },
+        {
+          "parameters": {
+            "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.client_id) throw new Error('Missing required field: client_id');\nreturn [{ json: { client_id: body.client_id, pipeline_run_id: body.pipeline_run_id || null, started_at: new Date().toISOString() } }];"
+          },
+          "id": "170ee1cf-bfc3-4004-92d7-c331d457b661",
+          "name": "Validate_Score_Payload",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            768,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "url": "={{ $env.SUPABASE_URL }}/rest/v1/clients?id=eq.{{ $json.client_id }}&select=id,config",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "apikey",
+                  "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Authorization",
+                  "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                }
+              ]
+            },
+            "options": {}
+          },
+          "id": "35fff325-4cac-4954-8de8-3659827f8a73",
+          "name": "Fetch_Client_Config",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            992,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?client_id=eq.{{ $json.client_id }}&priority_score=is.null&select=id,canonical_head_term,theme_label,suggested_service_pillar,pillar_assignment_confidence,content_theme,keyword_count,cannibalization_risk_page_id",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "apikey",
+                  "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Authorization",
+                  "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                }
+              ]
+            },
+            "options": {}
+          },
+          "id": "2e11fd70-3965-4073-a2f9-bc64ad09cbe5",
+          "name": "Fetch_Unscored_Clusters",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1216,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "// Check cost ceiling before starting expensive SerpAPI calls\nconst client = ($('Fetch_Client_Config').first().json || [])[0];\nconst clusters = $input.first().json || [];\nconst ctx = $('Validate_Score_Payload').first().json;\n\nconst budget = client?.config?.monthly_api_budget_usd || 50;\nconst runsPerMonth = client?.config?.expected_runs_per_month || 4;\nconst ceilingPct = client?.config?.per_run_cost_ceiling_pct || 150;\nconst perRunCeiling = (budget / runsPerMonth) * (ceilingPct / 100);\n\n// SerpAPI costs ~$0.01 per search, we do 3 per cluster, cap at 100 clusters\nconst maxClusters = Math.min(100, clusters.length);\nconst estimatedCost = maxClusters * 3 * 0.01;\n\nif (estimatedCost > perRunCeiling) {\n  throw new Error(`Cost ceiling would be exceeded: estimated $${estimatedCost.toFixed(2)} > ceiling $${perRunCeiling.toFixed(2)}. Reduce cluster count or increase budget.`);\n}\n\nreturn clusters.slice(0, maxClusters).map(cluster => ({\n  json: {\n    ...ctx,\n    client_config: client?.config || {},\n    cluster_id: cluster.id,\n    head_term: cluster.canonical_head_term,\n    theme_label: cluster.theme_label,\n    suggested_service_pillar: cluster.suggested_service_pillar,\n    pillar_assignment_confidence: cluster.pillar_assignment_confidence || 0,\n    content_theme: cluster.content_theme,\n    keyword_count: cluster.keyword_count || 0,\n    cannibalization_risk_page_id: cluster.cannibalization_risk_page_id\n  }\n}));"
+          },
+          "id": "518b3d61-58d4-47c8-a7c5-46ad8b8e607f",
+          "name": "Check_Cost_Ceiling",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            1424,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "url": "=https://serpapi.com/search.json?q={{ encodeURIComponent($json.head_term) }}&num=3&api_key={{ $env.SERPAPI_KEY }}",
+            "options": {}
+          },
+          "id": "38098eb0-18fa-4104-9fe4-9f3617c6f9ea",
+          "name": "SerpAPI_Search",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1648,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "// Parse SERP results and build LLM ICP scoring request\nconst ctx = $('Check_Cost_Ceiling').item.json;\nconst serpData = $input.first().json;\n\nconst organicResults = (serpData?.organic_results || []).slice(0, 3).map(r => ({\n  title: r.title || '',\n  snippet: r.snippet || '',\n  link: r.link || ''\n}));\n\nreturn [{\n  json: {\n    ...ctx,\n    serp_results: organicResults,\n    llm_request: {\n      model: 'google/gemini-2.0-flash-001',\n      messages: [\n        {\n          role: 'system',\n          content: 'You are an expert SEO strategist scoring a keyword cluster for B2B ICP fit. Return ONLY raw JSON with: icp_match_score (0-1), icp_match_reasoning, commercial_intent_weight (number per the scale), serp_intent_signals (array of strings), priority_score_inputs object.'\n        },\n        {\n          role: 'user',\n          content: `Score this cluster:\\n\\nHead term: ${ctx.head_term}\\nTheme: ${ctx.theme_label}\\nContent theme: ${ctx.content_theme}\\n\\nSERP results:\\n${JSON.stringify(organicResults, null, 2)}\\n\\nICP persona: ${ctx.client_config?.icp_persona || ''}\\n\\nCommercial intent scale: transactional=5, commercial_investigation=3, navigational_branded=4, local=4, informational=1, navigational_other=0, navigational_competitor=-10\\n\\nReturn: icp_match_score, icp_match_reasoning, commercial_intent_weight, serp_intent_signals, priority_score_inputs (with pillar_match_bonus=1 if pillar assigned else 0, cannibalization_risk_penalty=1 if risk flag else 0).`\n        }\n      ],\n      response_format: { type: 'json_object' },\n      temperature: 0.1,\n      max_tokens: 512\n    }\n  }\n}];"
+          },
+          "id": "491aa866-2940-4d09-bca5-0d730181cf27",
+          "name": "Build_ICP_Request",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            1872,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://openrouter.ai/api/v1/chat/completions",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendBody": true,
+            "bodyParameters": {
+              "parameters": [
+                {}
+              ]
+            },
+            "options": {}
+          },
+          "id": "a1902f20-25e7-4acc-affc-8f8e1b97db14",
+          "name": "LLM_ICP_Score",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            2096,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "// Compute final priority_score and update cluster\nconst ctx = $('Build_ICP_Request').item.json;\nconst llmRaw = $input.first().json;\n\nlet scoring = {};\ntry {\n  scoring = JSON.parse(llmRaw.choices?.[0]?.message?.content || '{}');\n} catch(e) {\n  scoring = { icp_match_score: 0.5, commercial_intent_weight: 1 };\n}\n\nconst inputs = scoring.priority_score_inputs || {};\nconst commercial = scoring.commercial_intent_weight || inputs.commercial_intent_weight || 1;\nconst icpScore = scoring.icp_match_score || 0.5;\nconst totalVolume = ctx.keyword_count || 1; // Proxy since we don't have volume aggregated here\nconst avgKd = 0; // Would need to join keyword_classifications — use 0 as safe default\nconst pillarBonus = (ctx.suggested_service_pillar && ctx.pillar_assignment_confidence > 0.5) ? 1 : 0;\nconst nicheBonus = inputs.niche_focus_bonus || 0;\nconst cannibalPenalty = ctx.cannibalization_risk_page_id ? 1 : 0;\n\nconst priorityScore = (commercial * 5)\n  + (icpScore * 3)\n  + (Math.log(totalVolume + 1) * 1)\n  - (avgKd * 0.5)\n  + (pillarBonus * 1.5)\n  + (nicheBonus * 1)\n  - (cannibalPenalty * 3);\n\nconst inputTokens = llmRaw.usage?.prompt_tokens || 0;\nconst outputTokens = llmRaw.usage?.completion_tokens || 0;\n\nreturn [{\n  json: {\n    client_id: ctx.client_id,\n    pipeline_run_id: ctx.pipeline_run_id,\n    cluster_id: ctx.cluster_id,\n    priority_score: Math.round(priorityScore * 100) / 100,\n    icp_match_score: icpScore,\n    commercial_intent_weight: commercial,\n    llm_tokens: { input: inputTokens, output: outputTokens },\n    serp_cost: 3 * 0.01\n  }\n}];"
+          },
+          "id": "f13307fc-7368-4bd5-8e73-17a7f1ce37b6",
+          "name": "Compute_Priority_Score",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            2304,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "method": "PATCH",
+            "url": "={{ $env.SUPABASE_URL }}/rest/v1/clusters?id=eq.{{ $json.cluster_id }}",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "apikey",
+                  "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Authorization",
+                  "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "bodyParameters": {
+              "parameters": [
+                {}
+              ]
+            },
+            "options": {}
+          },
+          "id": "b04eff6a-51ac-4db7-a577-401ec9874b12",
+          "name": "Update_Cluster_Score",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            2528,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "={{ $env.SUPABASE_URL }}/rest/v1/api_cost_log",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "apikey",
+                  "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Authorization",
+                  "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "bodyParameters": {
+              "parameters": [
+                {}
+              ]
+            },
+            "options": {}
+          },
+          "id": "cb98b74f-9ad7-401e-94ab-61fb2d065d1b",
+          "name": "Log_ICP_Costs",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            2752,
+            512
+          ]
+        },
+        {
+          "parameters": {
+            "respondWith": "json",
+            "responseBody": "={{ JSON.stringify({ ok: true, status: 'scoring_complete' }) }}",
+            "options": {}
+          },
+          "id": "f1f9ac2b-75c8-4ab5-875a-44d175484a40",
+          "name": "Respond_Score",
+          "type": "n8n-nodes-base.respondToWebhook",
+          "typeVersion": 1,
+          "position": [
+            2976,
+            512
+          ]
+        },
+        {
+          "id": "f5b59fd8-bc76-4601-85f9-8104a74573af",
+          "name": "Cost_Gate_SerpAPI_RPC",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1424,
+            720
+          ],
+          "parameters": {
+            "method": "POST",
+            "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/check_cost_ceiling",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "apikey",
+                  "value": ":{{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Authorization",
+                  "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "specifyBody": "json",
+            "jsonBody": "={{ JSON.stringify({ p_pipeline_run_id: $('Validate_Score_Payload').item.json.pipeline_run_id, p_predicted_additional_usd: 3.0 }) }}",
+            "options": {}
+          }
+        },
+        {
+          "id": "6ee11bd5-88aa-4132-945a-c182426a052e",
+          "name": "Cost_Gate_SerpAPI_IF",
+          "type": "n8n-nodes-base.if",
+          "typeVersion": 2,
+          "position": [
+            1648,
+            720
+          ],
+          "parameters": {
+            "conditions": {
+              "options": {
+                "caseSensitive": true,
+                "leftValue": "",
+                "typeValidation": "strict",
+                "version": 1
+              },
+              "combinator": "or",
+              "conditions": [
+                {
+                  "id": "allowed-true",
+                  "leftValue": "={{ $json.allowed }}",
+                  "rightValue": true,
+                  "operator": {
+                    "type": "boolean",
+                    "operation": "true",
+                    "singleValue": true
+                  }
+                },
+                {
+                  "id": "no-run-id",
+                  "leftValue": "={{ $json.reason }}",
+                  "rightValue": "pipeline_run not found",
+                  "operator": {
+                    "type": "string",
+                    "operation": "equals"
+                  }
+                }
+              ]
+            },
+            "options": {}
+          }
+        },
+        {
+          "id": "29fbf07f-0dd7-460a-8c92-6e8b3c1f8820",
+          "name": "Send_Cost_Pause_Slack_SerpAPI",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1872,
+            720
+          ],
+          "parameters": {
+            "method": "POST",
+            "url": "https://slack.com/api/chat.postMessage",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpHeaderAuth",
+            "sendBody": true,
+            "specifyBody": "json",
+            "jsonBody": "={{ JSON.stringify({ channel: $env.SLACK_OPS_CHANNEL, text: 'WF-04 SerpAPI scoring paused by cost ceiling', blocks: [ { type: 'header', text: { type: 'plain_text', text: 'Cost ceiling hit (WF-04 SerpAPI + ICP scoring)' } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*Reason:*\\n' + $json.reason }, { type: 'mrkdwn', text: '*Cost so far:* $' + $json.cost_so_far_usd }, { type: 'mrkdwn', text: '*Ceiling:* $' + $json.cost_ceiling_usd }, { type: 'mrkdwn', text: '*Projected total:* $' + $json.projected_total_usd } ] }, { type: 'section', text: { type: 'mrkdwn', text: 'Pipeline run paused. Inspect in Supabase `pipeline_runs` (status should be `paused_cost_ceiling`).' } } ] }) }}",
+            "options": {
+              "timeout": 10000
+            }
+          }
+        }
+      ],
+      "connections": {
+        "Webhook_ICP_Score": {
+          "main": [
+            [
+              {
+                "node": "Validate_Score_Payload",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Validate_Score_Payload": {
+          "main": [
+            [
+              {
+                "node": "Fetch_Client_Config",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Fetch_Client_Config": {
+          "main": [
+            [
+              {
+                "node": "Fetch_Unscored_Clusters",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Fetch_Unscored_Clusters": {
+          "main": [
+            [
+              {
+                "node": "Check_Cost_Ceiling",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "SerpAPI_Search": {
+          "main": [
+            [
+              {
+                "node": "Build_ICP_Request",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Build_ICP_Request": {
+          "main": [
+            [
+              {
+                "node": "LLM_ICP_Score",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "LLM_ICP_Score": {
+          "main": [
+            [
+              {
+                "node": "Compute_Priority_Score",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Compute_Priority_Score": {
+          "main": [
+            [
+              {
+                "node": "Update_Cluster_Score",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Update_Cluster_Score": {
+          "main": [
+            [
+              {
+                "node": "Log_ICP_Costs",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Log_ICP_Costs": {
+          "main": [
+            [
+              {
+                "node": "Respond_Score",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Check_Cost_Ceiling": {
+          "main": [
+            [
+              {
+                "node": "Cost_Gate_SerpAPI_RPC",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Cost_Gate_SerpAPI_RPC": {
+          "main": [
+            [
+              {
+                "node": "Cost_Gate_SerpAPI_IF",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Cost_Gate_SerpAPI_IF": {
+          "main": [
+            [
+              {
+                "node": "SerpAPI_Search",
+                "type": "main",
+                "index": 0
+              }
+            ],
+            [
+              {
+                "node": "Send_Cost_Pause_Slack_SerpAPI",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Send_Cost_Pause_Slack_SerpAPI": {
+          "main": [
+            [
+              {
+                "node": "Respond_Score",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "admin admin",
+      "name": null,
+      "description": null,
+      "autosaved": false,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-06-06T17:58:34.331Z",
+          "id": 7,
+          "workflowId": "ixMXJFl4GWWZvw83",
+          "versionId": "f509b1cf-e385-4d53-a229-3df0a2c4e84f",
+          "event": "deactivated",
+          "userId": "a7c042e5-9e28-47ff-97f4-1bf27271b298"
+        },
+        {
+          "createdAt": "2026-06-06T17:58:34.350Z",
+          "id": 8,
+          "workflowId": "ixMXJFl4GWWZvw83",
+          "versionId": "f509b1cf-e385-4d53-a229-3df0a2c4e84f",
+          "event": "activated",
+          "userId": "a7c042e5-9e28-47ff-97f4-1bf27271b298"
+        }
+      ]
+    }
+  }
+}
